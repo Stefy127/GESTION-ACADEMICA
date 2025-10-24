@@ -74,7 +74,7 @@ restore: ## Restaurar backup de la base de datos (requiere BACKUP_FILE)
 	@docker-compose exec -T postgres psql -U gestion_user -d gestion_academica < $(BACKUP_FILE)
 	@echo "✅ Backup restaurado"
 
-dev: ## Modo desarrollo (iniciar con logs)
+dev: ## Modo desarrollo (iniciar con logs para comprobar errores)
 	@echo "🔧 Iniciando en modo desarrollo..."
 	@docker-compose up
 
