@@ -1,0 +1,33 @@
+# Dependencias del sistema para Gestión Académica
+# Este archivo lista las dependencias del sistema y PHP
+
+# PHP y extensiones requeridas
+php>=8.2
+php-pdo
+php-pdo-pgsql
+php-mbstring
+php-xml
+php-curl
+php-zip
+php-gd
+php-opcache
+
+# Servicios Docker requeridos
+docker>=20.0
+docker-compose>=2.0
+
+# Base de datos
+postgresql>=15.0
+
+# Herramientas de desarrollo (opcionales)
+composer>=2.0
+git>=2.0
+
+# Extensiones PHP adicionales para desarrollo
+php-xdebug (opcional, solo para desarrollo)
+phpunit (opcional, para testing)
+
+# Notas:
+# - Las extensiones PHP se instalan automáticamente en el Dockerfile
+# - Docker y Docker Compose deben estar instalados en el sistema host
+# - PostgreSQL se ejecuta en contenedor Docker

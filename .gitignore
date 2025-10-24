@@ -1,0 +1,28 @@
+# Archivos y directorios que deben ser ignorados por Git
+/vendor/
+/node_modules/
+/logs/
+.env
+.env.local
+.env.production
+.env.staging
+
+# Archivos de configuración local
+config/local.php
+
+# Archivos de cache
+/cache/
+/tmp/
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de Docker
+docker-compose.override.yml

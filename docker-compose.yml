@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Servicio PHP
+  php:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: gestion_academica_php
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - ./docker/php.ini:/usr/local/etc/php/php.ini
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=gestion_academica
+      - DB_USER=gestion_user
+      - DB_PASSWORD=gestion_password
+    networks:
+      - gestion_network
+
+  # Servicio PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: gestion_academica_postgres
+    environment:
+      POSTGRES_DB: gestion_academica
+      POSTGRES_USER: gestion_user
+      POSTGRES_PASSWORD: gestion_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5436:5432"
+    networks:
+      - gestion_network
+
+  # Servicio phpMyAdmin (opcional para administración)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: gestion_academica_phpmyadmin
+    environment:
+      PMA_HOST: postgres
+      PMA_PORT: 5432
+      PMA_USER: gestion_user
+      PMA_PASSWORD: gestion_password
+    ports:
+      - "8081:80"
+    depends_on:
+      - postgres
+    networks:
+      - gestion_network
+
+volumes:
+  postgres_data:
+
+networks:
+  gestion_network:
+    driver: bridge
