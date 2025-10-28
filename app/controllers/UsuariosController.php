@@ -53,33 +53,124 @@ class UsuariosController extends Controller
 
     private function getUsuarios()
     {
-        // Simular datos de usuarios
-        return [
-            ['id' => 1, 'nombre' => 'Admin', 'apellido' => 'Sistema', 'email' => 'admin@sistema.edu', 'rol' => 'administrador'],
-            ['id' => 2, 'nombre' => 'Juan', 'apellido' => 'Pérez', 'email' => 'juan.perez@universidad.edu', 'rol' => 'docente'],
-            ['id' => 3, 'nombre' => 'María', 'apellido' => 'González', 'email' => 'maria.gonzalez@universidad.edu', 'rol' => 'docente'],
-            ['id' => 4, 'nombre' => 'Carlos', 'apellido' => 'López', 'email' => 'carlos.lopez@universidad.edu', 'rol' => 'docente']
-        ];
+        try {
+            $db = Database::getInstance();
+            return $db->query("SELECT u.*, r.nombre as rol 
+                              FROM usuarios u 
+                              LEFT JOIN roles r ON u.rol_id = r.id 
+                              WHERE u.activo = true 
+                              ORDER BY u.nombre, u.apellido");
+        } catch (Exception $e) {
+            return [];
+        }
     }
 
     private function getRoles()
     {
         return [
-            ['id' => 1, 'nombre' => 'administrador'],
-            ['id' => 2, 'nombre' => 'coordinador'],
-            ['id' => 3, 'nombre' => 'docente'],
-            ['id' => 4, 'nombre' => 'autoridad']
+            ['nombre' => 'administrador'],
+            ['nombre' => 'coordinador'],
+            ['nombre' => 'docente'],
+            ['nombre' => 'autoridad']
         ];
     }
 
     private function getUsuario($id)
     {
-        $usuarios = $this->getUsuarios();
-        foreach ($usuarios as $usuario) {
-            if ($usuario['id'] == $id) {
-                return $usuario;
-            }
+        try {
+            $db = Database::getInstance();
+            $result = $db->query("SELECT u.*, r.nombre as rol 
+                                  FROM usuarios u 
+                                  LEFT JOIN roles r ON u.rol_id = r.id 
+                                  WHERE u.id = :id", [':id' => $id]);
+            return $result ? $result[0] : null;
+        } catch (Exception $e) {
+            return null;
         }
-        return null;
+    }
+    
+    public function store()
+    {
+        if (!Middleware::checkRole(['administrador', 'coordinador'])) {
+            echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
+            return;
+        }
+        try {
+            $db = Database::getInstance();
+            
+            // Obtener rol_id basado en el nombre del rol
+            $rolName = $_POST['rol'] ?? 'docente';
+            $rolResult = $db->query("SELECT id FROM roles WHERE nombre = :nombre", [':nombre' => $rolName]);
+            $rolId = $rolResult && count($rolResult) > 0 ? $rolResult[0]['id'] : 3; // Default a docente (rol_id = 3)
+            
+            $hashedPassword = password_hash($_POST['password'] ?? '', PASSWORD_BCRYPT);
+            $sql = "INSERT INTO usuarios (ci, nombre, apellido, email, password_hash, rol_id, activo) 
+                    VALUES (:ci, :nombre, :apellido, :email, :password, :rol_id, true)";
+            $params = [
+                ':ci' => $_POST['ci'] ?? uniqid('CI'), // Generar CI si no se proporciona
+                ':nombre' => $_POST['nombre'] ?? '',
+                ':apellido' => $_POST['apellido'] ?? '',
+                ':email' => $_POST['email'] ?? '',
+                ':password' => $hashedPassword,
+                ':rol_id' => $rolId
+            ];
+            $db->query($sql, $params);
+            echo json_encode(['success' => true, 'message' => 'Usuario creado exitosamente', 'redirect' => '/usuarios']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
+    
+    public function update($id)
+    {
+        if (!Middleware::checkRole(['administrador', 'coordinador'])) {
+            echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
+            return;
+        }
+        try {
+            $db = Database::getInstance();
+            
+            // Obtener rol_id basado en el nombre del rol
+            $rolName = $_POST['rol'] ?? 'docente';
+            $rolResult = $db->query("SELECT id FROM roles WHERE nombre = :nombre", [':nombre' => $rolName]);
+            $rolId = $rolResult && count($rolResult) > 0 ? $rolResult[0]['id'] : 3;
+            
+            $sql = "UPDATE usuarios SET nombre = :nombre, apellido = :apellido, email = :email, rol_id = :rol_id WHERE id = :id";
+            $params = [
+                ':nombre' => $_POST['nombre'] ?? '',
+                ':apellido' => $_POST['apellido'] ?? '',
+                ':email' => $_POST['email'] ?? '',
+                ':rol_id' => $rolId,
+                ':id' => $id
+            ];
+            
+            // Si hay password, actualizarlo
+            if (!empty($_POST['password'])) {
+                $hashedPassword = password_hash($_POST['password'], PASSWORD_BCRYPT);
+                $sql = "UPDATE usuarios SET nombre = :nombre, apellido = :apellido, email = :email, rol_id = :rol_id, password_hash = :password WHERE id = :id";
+                $params[':password'] = $hashedPassword;
+            }
+            
+            $db->query($sql, $params);
+            echo json_encode(['success' => true, 'message' => 'Usuario actualizado', 'redirect' => '/usuarios']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
+    
+    public function delete($id)
+    {
+        if (!Middleware::checkRole(['administrador', 'coordinador'])) {
+            echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
+            return;
+        }
+        try {
+            $db = Database::getInstance();
+            $sql = "UPDATE usuarios SET activo = false WHERE id = :id";
+            $db->query($sql, [':id' => $id]);
+            echo json_encode(['success' => true, 'message' => 'Usuario eliminado', 'redirect' => '/usuarios']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
     }
 }

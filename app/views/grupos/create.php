@@ -23,61 +23,52 @@
                 <h5 class="card-title mb-0">Información del Grupo</h5>
             </div>
             <div class="card-body">
-                <form>
+                <form id="formCrearGrupo" onsubmit="return false;">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Número del Grupo</label>
-                            <input type="text" class="form-control" placeholder="Ej: A1, B2, C3" required>
+                            <input type="text" name="numero" class="form-control" placeholder="Ej: A1, B2, C3" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Semestre</label>
-                            <select class="form-select" required>
+                            <select name="semestre" class="form-select" required>
                                 <option value="">Seleccionar semestre</option>
-                                <option value="primero">Primero</option>
-                                <option value="segundo">Segundo</option>
-                                <option value="tercero">Tercero</option>
-                                <option value="cuarto">Cuarto</option>
-                                <option value="quinto">Quinto</option>
-                                <option value="sexto">Sexto</option>
+                                <option value="2024-1">2024-1</option>
+                                <option value="2024-2">2024-2</option>
+                                <option value="2025-1">2025-1</option>
+                                <option value="2025-2">2025-2</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Turno</label>
-                            <select class="form-select" required>
+                            <select name="turno" class="form-select" required>
                                 <option value="">Seleccionar turno</option>
-                                <option value="mañana">Mañana</option>
-                                <option value="tarde">Tarde</option>
-                                <option value="noche">Noche</option>
+                                <option value="Mañana">Mañana</option>
+                                <option value="Tarde">Tarde</option>
+                                <option value="Noche">Noche</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Materia</label>
-                            <select class="form-select" required>
+                            <select name="materia_id" class="form-select" required>
                                 <option value="">Seleccionar materia</option>
                                 <?php foreach ($materias as $materia): ?>
-                                <option value="<?php echo $materia['id']; ?>"><?php echo htmlspecialchars($materia['nombre']); ?></option>
+                                <option value="<?php echo $materia['id']; ?>"><?php echo htmlspecialchars($materia['nombre'] . ' (' . $materia['codigo'] . ')'); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Capacidad Máxima</label>
-                            <input type="number" class="form-control" placeholder="30" min="1" max="50" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Estado</label>
-                            <select class="form-select" required>
-                                <option value="activo">Activo</option>
-                                <option value="inactivo">Inactivo</option>
-                            </select>
+                            <input type="number" name="capacidad_maxima" class="form-control" placeholder="30" min="1" max="50" required>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Descripción</label>
-                            <textarea class="form-control" rows="3" placeholder="Descripción adicional del grupo..."></textarea>
+                            <textarea name="descripcion" class="form-control" rows="3" placeholder="Descripción adicional del grupo..."></textarea>
                         </div>
                     </div>
                     
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="btnSubmit">
                             <i class="bi bi-check-circle me-1"></i>Crear Grupo
                         </button>
                         <a href="/grupos" class="btn btn-outline-secondary ms-2">
@@ -85,6 +76,40 @@
                         </a>
                     </div>
                 </form>
+                
+<script>
+document.getElementById('formCrearGrupo').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const btnSubmit = document.getElementById('btnSubmit');
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Creando...';
+    
+    const formData = new FormData(this);
+    
+    fetch('/grupos/store', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.href = data.redirect || '/grupos';
+        } else {
+            alert('Error: ' + data.message);
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Crear Grupo';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ocurrio un error al crear el grupo');
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Crear Grupo';
+    });
+});
+</script>
             </div>
         </div>
     </div>

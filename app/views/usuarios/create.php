@@ -23,52 +23,45 @@
                 <h5 class="card-title mb-0">Información del Usuario</h5>
             </div>
             <div class="card-body">
-                <form>
+                <form id="formCrearUsuario" onsubmit="return false;">
                     <div class="row g-3">
                         <div class="col-md-6">
+                            <label class="form-label">Cédula de Identidad</label>
+                            <input type="text" name="ci" class="form-control" placeholder="CI del usuario" required>
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label">Nombre</label>
-                            <input type="text" class="form-control" placeholder="Nombre del usuario" required>
+                            <input type="text" name="nombre" class="form-control" placeholder="Nombre del usuario" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Apellido</label>
-                            <input type="text" class="form-control" placeholder="Apellido del usuario" required>
+                            <input type="text" name="apellido" class="form-control" placeholder="Apellido del usuario" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Email</label>
-                            <input type="email" class="form-control" placeholder="usuario@universidad.edu" required>
+                            <input type="email" name="email" class="form-control" placeholder="usuario@universidad.edu" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Rol</label>
-                            <select class="form-select" required>
+                            <select name="rol" class="form-select" required>
                                 <option value="">Seleccionar rol</option>
                                 <?php foreach ($roles as $rol): ?>
-                                <option value="<?php echo $rol['id']; ?>"><?php echo ucfirst($rol['nombre']); ?></option>
+                                <option value="<?php echo $rol['nombre']; ?>"><?php echo ucfirst($rol['nombre']); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" placeholder="Contraseña temporal" required>
+                            <input type="password" name="password" class="form-control" placeholder="Contraseña temporal" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Confirmar Contraseña</label>
-                            <input type="password" class="form-control" placeholder="Confirmar contraseña" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Teléfono</label>
-                            <input type="tel" class="form-control" placeholder="555-0000">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Estado</label>
-                            <select class="form-select" required>
-                                <option value="activo">Activo</option>
-                                <option value="inactivo">Inactivo</option>
-                            </select>
+                            <input type="password" name="password_confirm" class="form-control" placeholder="Confirmar contraseña" required>
                         </div>
                     </div>
                     
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="btnSubmit">
                             <i class="bi bi-check-circle me-1"></i>Crear Usuario
                         </button>
                         <a href="/usuarios" class="btn btn-outline-secondary ms-2">
@@ -76,6 +69,49 @@
                         </a>
                     </div>
                 </form>
+                
+<script>
+document.getElementById('formCrearUsuario').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const password = this.querySelector('[name="password"]').value;
+    const passwordConfirm = this.querySelector('[name="password_confirm"]').value;
+    
+    if (password !== passwordConfirm) {
+        alert('Las contraseñas no coinciden');
+        return;
+    }
+    
+    const btnSubmit = document.getElementById('btnSubmit');
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Creando...';
+    
+    const formData = new FormData(this);
+    formData.delete('password_confirm'); // No enviar confirmación
+    
+    fetch('/usuarios/store', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.href = data.redirect || '/usuarios';
+        } else {
+            alert('Error: ' + data.message);
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Crear Usuario';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ocurrió un error al crear el usuario');
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Crear Usuario';
+    });
+});
+</script>
             </div>
         </div>
     </div>

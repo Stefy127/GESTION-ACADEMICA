@@ -231,10 +231,10 @@ class DashboardController extends Controller
         
         switch ($chartType) {
             case 'asistencia_mensual':
-                $data = $this->getAsistenciaMensualData();
+                $data = $this->getAsistenciaMensualData($user);
                 break;
             case 'horarios_por_dia':
-                $data = $this->getHorariosPorDiaData();
+                $data = $this->getHorariosPorDiaData($user);
                 break;
             case 'aulas_ocupacion':
                 $data = $this->getAulasOcupacionData();
@@ -249,18 +249,21 @@ class DashboardController extends Controller
     /**
      * Datos de asistencia mensual
      */
-    private function getAsistenciaMensualData()
+    private function getAsistenciaMensualData($user)
     {
         $sql = "SELECT 
                     DATE_TRUNC('day', fecha) as dia,
                     COUNT(*) as total_clases,
                     SUM(CASE WHEN estado = 'presente' THEN 1 ELSE 0 END) as clases_presentes
                 FROM asistencia_docente 
-                WHERE fecha >= CURRENT_DATE - INTERVAL '30 days'
-                GROUP BY DATE_TRUNC('day', fecha)
-                ORDER BY dia";
+                WHERE fecha >= CURRENT_DATE - INTERVAL '30 days'";
         
-        $result = $this->db->query($sql);
+        if ($user['rol'] === 'docente') {
+            $sql .= " AND docente_id = :user_id";
+            $result = $this->db->query($sql, ['user_id' => $user['id']]);
+        } else {
+            $result = $this->db->query($sql);
+        }
         
         $labels = [];
         $datasets = [
@@ -283,7 +286,7 @@ class DashboardController extends Controller
     /**
      * Datos de horarios por día
      */
-    private function getHorariosPorDiaData()
+    private function getHorariosPorDiaData($user)
     {
         $sql = "SELECT 
                     CASE dia_semana
@@ -297,11 +300,18 @@ class DashboardController extends Controller
                     END as dia,
                     COUNT(*) as total_horarios
                 FROM horarios 
-                WHERE activo = true
-                GROUP BY dia_semana
-                ORDER BY dia_semana";
+                WHERE activo = true";
         
-        $result = $this->db->query($sql);
+        if ($user['rol'] === 'docente') {
+            $sql .= " AND docente_id = :user_id";
+            $params = ['user_id' => $user['id']];
+        } else {
+            $params = [];
+        }
+        
+        $sql .= " GROUP BY dia_semana ORDER BY dia_semana";
+        
+        $result = $this->db->query($sql, $params);
         
         $labels = [];
         $data = [];

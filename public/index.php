@@ -57,36 +57,53 @@ $router->get('/dashboard/chart-data', 'Dashboard@getChartData');
 // Rutas de gestión de usuarios
 $router->get('/usuarios', 'Usuarios@index');
 $router->get('/usuarios/create', 'Usuarios@create');
+$router->post('/usuarios/store', 'Usuarios@store');
 $router->get('/usuarios/edit/{id}', 'Usuarios@edit');
+$router->post('/usuarios/update/{id}', 'Usuarios@update');
+$router->post('/usuarios/delete/{id}', 'Usuarios@delete');
 
-// Rutas de gestión de docentes
-$router->get('/docentes', 'Docentes@index');
-$router->get('/docentes/create', 'Docentes@create');
-$router->get('/docentes/edit/{id}', 'Docentes@edit');
+// Redirección de /docentes a /usuarios (mantener compatibilidad)
+$router->get('/docentes', function() {
+    header('Location: /usuarios');
+    exit;
+});
 
 // Rutas de gestión de materias
 $router->get('/materias', 'Materias@index');
 $router->get('/materias/create', 'Materias@create');
+$router->post('/materias/store', 'Materias@store');
 $router->get('/materias/edit/{id}', 'Materias@edit');
+$router->post('/materias/update/{id}', 'Materias@update');
+$router->post('/materias/delete/{id}', 'Materias@delete');
 
 // Rutas de gestión de grupos
 $router->get('/grupos', 'Grupos@index');
 $router->get('/grupos/create', 'Grupos@create');
+$router->post('/grupos/store', 'Grupos@store');
 $router->get('/grupos/edit/{id}', 'Grupos@edit');
+$router->post('/grupos/update/{id}', 'Grupos@update');
+$router->post('/grupos/delete/{id}', 'Grupos@delete');
 
 // Rutas de gestión de aulas
 $router->get('/aulas', 'Aulas@index');
 $router->get('/aulas/create', 'Aulas@create');
+$router->post('/aulas/store', 'Aulas@store');
 $router->get('/aulas/edit/{id}', 'Aulas@edit');
+$router->post('/aulas/update/{id}', 'Aulas@update');
+$router->post('/aulas/delete/{id}', 'Aulas@delete');
 
 // Rutas de gestión de horarios
 $router->get('/horarios', 'Horarios@index');
 $router->get('/horarios/create', 'Horarios@create');
+$router->post('/horarios/store', 'Horarios@store');
 $router->get('/horarios/edit/{id}', 'Horarios@edit');
+$router->post('/horarios/update/{id}', 'Horarios@update');
+$router->post('/horarios/delete/{id}', 'Horarios@delete');
 
 // Rutas de asistencia
 $router->get('/asistencia', 'Asistencia@index');
 $router->get('/asistencia/registrar', 'Asistencia@registrar');
+$router->post('/asistencia/registrar', 'Asistencia@processRegistro');
 $router->get('/asistencia/reportes', 'Asistencia@reportes');
 
 // Rutas de reportes

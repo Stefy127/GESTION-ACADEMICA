@@ -23,26 +23,26 @@
                 <h5 class="card-title mb-0">Información del Usuario</h5>
             </div>
             <div class="card-body">
-                <form>
+                <form id="formEditarUsuario" onsubmit="return false;">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Nombre</label>
-                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($usuario['nombre'] ?? ''); ?>" required>
+                            <input type="text" name="nombre" class="form-control" value="<?php echo htmlspecialchars($usuario['nombre'] ?? ''); ?>" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Apellido</label>
-                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($usuario['apellido'] ?? ''); ?>" required>
+                            <input type="text" name="apellido" class="form-control" value="<?php echo htmlspecialchars($usuario['apellido'] ?? ''); ?>" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Email</label>
-                            <input type="email" class="form-control" value="<?php echo htmlspecialchars($usuario['email'] ?? ''); ?>" required>
+                            <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($usuario['email'] ?? ''); ?>" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Rol</label>
-                            <select class="form-select" required>
+                            <select name="rol" class="form-select" required>
                                 <option value="">Seleccionar rol</option>
                                 <?php foreach ($roles as $rol): ?>
-                                <option value="<?php echo $rol['id']; ?>" <?php echo ($usuario['rol'] ?? '') === $rol['nombre'] ? 'selected' : ''; ?>>
+                                <option value="<?php echo $rol['nombre']; ?>" <?php echo isset($usuario['rol']) && $usuario['rol'] === $rol['nombre'] ? 'selected' : ''; ?>>
                                     <?php echo ucfirst($rol['nombre']); ?>
                                 </option>
                                 <?php endforeach; ?>
@@ -50,27 +50,16 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Nueva Contraseña</label>
-                            <input type="password" class="form-control" placeholder="Dejar vacío para mantener actual">
+                            <input type="password" name="password" class="form-control" placeholder="Dejar vacío para mantener actual">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Confirmar Contraseña</label>
-                            <input type="password" class="form-control" placeholder="Confirmar nueva contraseña">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Teléfono</label>
-                            <input type="tel" class="form-control" placeholder="555-0000">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Estado</label>
-                            <select class="form-select" required>
-                                <option value="activo">Activo</option>
-                                <option value="inactivo">Inactivo</option>
-                            </select>
+                            <input type="password" name="password_confirm" class="form-control" placeholder="Confirmar nueva contraseña">
                         </div>
                     </div>
                     
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="btnSubmit">
                             <i class="bi bi-check-circle me-1"></i>Guardar Cambios
                         </button>
                         <a href="/usuarios" class="btn btn-outline-secondary ms-2">
@@ -78,6 +67,49 @@
                         </a>
                     </div>
                 </form>
+                
+<script>
+document.getElementById('formEditarUsuario').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const password = this.querySelector('[name="password"]').value;
+    const passwordConfirm = this.querySelector('[name="password_confirm"]').value;
+    
+    if (password && password !== passwordConfirm) {
+        alert('Las contraseñas no coinciden');
+        return;
+    }
+    
+    const btnSubmit = document.getElementById('btnSubmit');
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Guardando...';
+    
+    const formData = new FormData(this);
+    formData.delete('password_confirm'); // No enviar confirmación
+    
+    fetch('/usuarios/update/<?php echo htmlspecialchars($usuario['id'] ?? ''); ?>', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.href = data.redirect || '/usuarios';
+        } else {
+            alert('Error: ' + data.message);
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Guardar Cambios';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ocurrió un error al actualizar el usuario');
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Guardar Cambios';
+    });
+});
+</script>
             </div>
         </div>
     </div>

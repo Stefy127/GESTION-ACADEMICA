@@ -52,34 +52,103 @@ class GruposController extends Controller
 
     private function getGrupos()
     {
-        return [
-            ['id' => 1, 'numero' => 'A1', 'semestre' => 'Primero', 'turno' => 'Mañana', 'materia' => 'Matemáticas'],
-            ['id' => 2, 'numero' => 'A2', 'semestre' => 'Primero', 'turno' => 'Tarde', 'materia' => 'Física'],
-            ['id' => 3, 'numero' => 'B1', 'semestre' => 'Segundo', 'turno' => 'Mañana', 'materia' => 'Química'],
-            ['id' => 4, 'numero' => 'B2', 'semestre' => 'Segundo', 'turno' => 'Tarde', 'materia' => 'Programación'],
-            ['id' => 5, 'numero' => 'C1', 'semestre' => 'Tercero', 'turno' => 'Mañana', 'materia' => 'Bases de Datos']
-        ];
+        try {
+            $db = Database::getInstance();
+            return $db->query("SELECT g.*, m.nombre as materia_nombre, m.codigo as materia_codigo, 
+                              u.nombre || ' ' || u.apellido as docente_nombre
+                              FROM grupos g
+                              LEFT JOIN materias m ON g.materia_id = m.id
+                              LEFT JOIN usuarios u ON g.docente_id = u.id
+                              WHERE g.activo = true
+                              ORDER BY g.numero");
+        } catch (Exception $e) {
+            return [];
+        }
     }
 
     private function getMaterias()
     {
-        return [
-            ['id' => 1, 'nombre' => 'Matemáticas'],
-            ['id' => 2, 'nombre' => 'Física'],
-            ['id' => 3, 'nombre' => 'Química'],
-            ['id' => 4, 'nombre' => 'Programación'],
-            ['id' => 5, 'nombre' => 'Bases de Datos']
-        ];
+        try {
+            $db = Database::getInstance();
+            return $db->query("SELECT id, nombre, codigo FROM materias WHERE activa = true ORDER BY nombre");
+        } catch (Exception $e) {
+            return [];
+        }
     }
 
     private function getGrupo($id)
     {
-        $grupos = $this->getGrupos();
-        foreach ($grupos as $grupo) {
-            if ($grupo['id'] == $id) {
-                return $grupo;
-            }
+        try {
+            $db = Database::getInstance();
+            $result = $db->query("SELECT * FROM grupos WHERE id = :id", [':id' => $id]);
+            return $result ? $result[0] : null;
+        } catch (Exception $e) {
+            return null;
         }
-        return null;
+    }
+    
+    public function store()
+    {
+        if (!Middleware::checkRole(['administrador', 'coordinador'])) {
+            echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
+            return;
+        }
+        try {
+            $db = Database::getInstance();
+            $sql = "INSERT INTO grupos (numero, semestre, turno, materia_id, capacidad_maxima, activo) 
+                    VALUES (:numero, :semestre, :turno, :materia_id, :capacidad_maxima, true)";
+            $params = [
+                ':numero' => $_POST['numero'] ?? '',
+                ':semestre' => $_POST['semestre'] ?? '',
+                ':turno' => $_POST['turno'] ?? '',
+                ':materia_id' => intval($_POST['materia_id'] ?? 0),
+                ':capacidad_maxima' => intval($_POST['capacidad_maxima'] ?? 30)
+            ];
+            $db->query($sql, $params);
+            echo json_encode(['success' => true, 'message' => 'Grupo creado exitosamente', 'redirect' => '/grupos']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
+    
+    public function update($id)
+    {
+        if (!Middleware::checkRole(['administrador', 'coordinador'])) {
+            echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
+            return;
+        }
+        try {
+            $db = Database::getInstance();
+            $sql = "UPDATE grupos SET numero = :numero, semestre = :semestre, turno = :turno, 
+                    materia_id = :materia_id, capacidad_maxima = :capacidad_maxima WHERE id = :id";
+            $params = [
+                ':numero' => $_POST['numero'] ?? '',
+                ':semestre' => $_POST['semestre'] ?? '',
+                ':turno' => $_POST['turno'] ?? '',
+                ':materia_id' => intval($_POST['materia_id'] ?? 0),
+                ':capacidad_maxima' => intval($_POST['capacidad_maxima'] ?? 30),
+                ':id' => $id
+            ];
+            $db->query($sql, $params);
+            echo json_encode(['success' => true, 'message' => 'Grupo actualizado', 'redirect' => '/grupos']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
+    
+    public function delete($id)
+    {
+        if (!Middleware::checkRole(['administrador', 'coordinador'])) {
+            echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
+            return;
+        }
+        try {
+            $db = Database::getInstance();
+            $sql = "UPDATE grupos SET activo = false WHERE id = :id";
+            $db->query($sql, [':id' => $id]);
+            echo json_encode(['success' => true, 'message' => 'Grupo eliminado', 'redirect' => '/grupos']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
     }
 }

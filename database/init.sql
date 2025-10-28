@@ -97,7 +97,9 @@ CREATE TABLE IF NOT EXISTS asistencia_docente (
     fecha DATE NOT NULL,
     hora_inicio TIME NOT NULL,
     hora_fin TIME NOT NULL,
-    estado VARCHAR(20) DEFAULT 'presente', -- presente, ausente, justificado
+    estado VARCHAR(20) DEFAULT 'presente', -- presente, ausente, justificado, tardanza
+    hora_marcacion TIMESTAMP NOT NULL,
+    tiempo_marcacion INTERVAL,
     observaciones TEXT,
     registrado_por INTEGER REFERENCES usuarios(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
