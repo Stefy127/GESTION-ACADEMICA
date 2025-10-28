@@ -10,6 +10,9 @@ class CargaMasivaController extends Controller
             return $this->view->renderWithLayout('errors/403', ['title' => 'Acceso Denegado']);
         }
 
+        // Registrar acceso al módulo
+        ActivityLogger::logView('carga_masiva', null);
+
         $data = [
             'title' => 'Carga Masiva de Datos',
             'user' => $this->getCurrentUser(),

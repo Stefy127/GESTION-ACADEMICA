@@ -31,21 +31,46 @@ class Auth
      */
     public function login($email, $password)
     {
+        error_log("DEBUG Auth: Attempting login for email: $email");
+        
+        // Intentar primero con email
         $sql = "SELECT u.*, r.nombre as rol_nombre, r.permisos 
                 FROM usuarios u 
                 LEFT JOIN roles r ON u.rol_id = r.id 
                 WHERE u.email = :email AND u.activo = true";
         
-        $user = $this->db->query($sql, ['email' => $email]);
-        
-        if (empty($user)) {
-            return ['success' => false, 'message' => 'Credenciales inválidas'];
-        }
-        
-        $user = $user[0];
-        
-        if (!password_verify($password, $user['password_hash'])) {
-            return ['success' => false, 'message' => 'Credenciales inválidas'];
+        try {
+            $user = $this->db->query($sql, ['email' => $email]);
+            error_log("DEBUG Auth: Found " . count($user) . " users with email");
+            
+            // Si no se encuentra por email, intentar por CI
+            if (empty($user)) {
+                error_log("DEBUG Auth: No user found with email, trying CI");
+                $sql = "SELECT u.*, r.nombre as rol_nombre, r.permisos 
+                        FROM usuarios u 
+                        LEFT JOIN roles r ON u.rol_id = r.id 
+                        WHERE u.ci = :ci AND u.activo = true";
+                $user = $this->db->query($sql, ['ci' => $email]);
+                error_log("DEBUG Auth: Found " . count($user) . " users with CI");
+            }
+            
+            if (empty($user)) {
+                error_log("DEBUG Auth: No user found");
+                return ['success' => false, 'message' => 'Credenciales inválidas'];
+            }
+            
+            $user = $user[0];
+            error_log("DEBUG Auth: User found - checking password");
+            
+            if (!password_verify($password, $user['password_hash'])) {
+                error_log("DEBUG Auth: Password verification failed");
+                return ['success' => false, 'message' => 'Credenciales inválidas'];
+            }
+            
+            error_log("DEBUG Auth: Password verified successfully");
+        } catch (Exception $e) {
+            error_log("DEBUG Auth: Exception during login: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Error de conexión. Inténtalo de nuevo.'];
         }
         
         // Crear sesión
@@ -261,19 +286,24 @@ class Auth
      */
     private function logActivity($userId, $action, $table = null, $recordId = null, $oldData = null, $newData = null)
     {
-        $sql = "INSERT INTO logs_actividad (usuario_id, accion, tabla_afectada, registro_id, datos_anteriores, datos_nuevos, ip_address, user_agent) 
-                VALUES (:user_id, :action, :table, :record_id, :old_data, :new_data, :ip, :user_agent)";
-        
-        $this->db->query($sql, [
-            'user_id' => $userId,
-            'action' => $action,
-            'table' => $table,
-            'record_id' => $recordId,
-            'old_data' => $oldData ? json_encode($oldData) : null,
-            'new_data' => $newData ? json_encode($newData) : null,
-            'ip' => $_SERVER['REMOTE_ADDR'] ?? null,
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null
-        ]);
+        try {
+            $sql = "INSERT INTO logs_actividad (usuario_id, accion, tabla_afectada, registro_id, datos_anteriores, datos_nuevos, ip_address, user_agent) 
+                    VALUES (:user_id, :action, :table, :record_id, :old_data, :new_data, :ip, :user_agent)";
+            
+            $this->db->query($sql, [
+                'user_id' => $userId,
+                'action' => $action,
+                'table' => $table,
+                'record_id' => $recordId,
+                'old_data' => $oldData ? json_encode($oldData) : null,
+                'new_data' => $newData ? json_encode($newData) : null,
+                'ip' => $_SERVER['REMOTE_ADDR'] ?? null,
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null
+            ]);
+        } catch (Exception $e) {
+            // Si falla el log, no interrumpir el flujo principal
+            error_log("Error logging activity: " . $e->getMessage());
+        }
     }
     
     /**

@@ -10,6 +10,9 @@ class ReportesController extends Controller
             return $this->view->renderWithLayout('errors/403', ['title' => 'Acceso Denegado']);
         }
 
+        // Registrar acceso al módulo
+        ActivityLogger::logView('reportes', null);
+
         $data = [
             'title' => 'Reportes del Sistema',
             'user' => $this->getCurrentUser(),

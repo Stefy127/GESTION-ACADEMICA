@@ -10,6 +10,9 @@ class MateriasController extends Controller
             return $this->view->renderWithLayout('errors/403', ['title' => 'Acceso Denegado']);
         }
 
+        // Registrar acceso al módulo
+        ActivityLogger::logView('materias', null);
+
         $data = [
             'title' => 'Gestión de Materias',
             'user' => $this->getCurrentUser(),
@@ -80,6 +83,18 @@ class MateriasController extends Controller
             $sql = "INSERT INTO materias (codigo, nombre, descripcion, nivel, carga_horaria) VALUES (:codigo, :nombre, :descripcion, :nivel, :carga_horaria)";
             $params = [':codigo' => $_POST['codigo'] ?? '', ':nombre' => $_POST['nombre'] ?? '', ':descripcion' => $_POST['descripcion'] ?? '', ':nivel' => $_POST['nivel'] ?? '', ':carga_horaria' => intval($_POST['carga_horaria'] ?? 0)];
             $db->query($sql, $params);
+            
+            // Obtener ID de la materia creada
+            $materiaIdSql = "SELECT id FROM materias WHERE codigo = :codigo ORDER BY created_at DESC LIMIT 1";
+            $materiaIdResult = $db->query($materiaIdSql, [':codigo' => $_POST['codigo']]);
+            $materiaId = $materiaIdResult && count($materiaIdResult) > 0 ? $materiaIdResult[0]['id'] : null;
+            
+            // Registrar actividad
+            ActivityLogger::logCreate('materias', $materiaId, [
+                'codigo' => $_POST['codigo'] ?? '',
+                'nombre' => $_POST['nombre'] ?? ''
+            ]);
+            
             echo json_encode(['success' => true, 'message' => 'Materia creada', 'redirect' => '/materias']);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
@@ -96,7 +111,18 @@ class MateriasController extends Controller
             $db = Database::getInstance();
             $sql = "UPDATE materias SET codigo = :codigo, nombre = :nombre, descripcion = :descripcion, nivel = :nivel, carga_horaria = :carga_horaria WHERE id = :id";
             $params = [':codigo' => $_POST['codigo'] ?? '', ':nombre' => $_POST['nombre'] ?? '', ':descripcion' => $_POST['descripcion'] ?? '', ':nivel' => $_POST['nivel'] ?? '', ':carga_horaria' => intval($_POST['carga_horaria'] ?? 0), ':id' => $id];
+            // Obtener datos anteriores
+            $oldSql = "SELECT * FROM materias WHERE id = :id";
+            $oldData = $db->query($oldSql, [':id' => $id]);
+            
             $db->query($sql, $params);
+            
+            // Registrar actividad
+            ActivityLogger::logUpdate('materias', $id, $oldData, [
+                'codigo' => $_POST['codigo'] ?? '',
+                'nombre' => $_POST['nombre'] ?? ''
+            ]);
+            
             echo json_encode(['success' => true, 'message' => 'Materia actualizada', 'redirect' => '/materias']);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);

@@ -90,6 +90,14 @@
                                         <span>Usuarios</span>
                                     </a>
                                 </li>
+                                <?php if (in_array($user['rol'], ['administrador', 'coordinador'])): ?>
+                                <li class="nav-item">
+                                    <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/docentes') !== false) ? 'active' : ''; ?>" href="/docentes">
+                                        <i class="bi bi-person-badge"></i>
+                                        <span>Docentes</span>
+                                    </a>
+                                </li>
+                                <?php endif; ?>
                                 <li class="nav-item">
                                     <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/materias') !== false) ? 'active' : ''; ?>" href="/materias">
                                         <i class="bi bi-book"></i>
@@ -151,6 +159,15 @@
                                     <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/reportes') !== false) ? 'active' : ''; ?>" href="/reportes">
                                         <i class="bi bi-graph-up"></i>
                                         <span>Reportes</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                            
+                            <?php if ($user['rol'] === 'administrador'): ?>
+                                <li class="nav-item">
+                                    <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/bitacora') !== false) ? 'active' : ''; ?>" href="/bitacora">
+                                        <i class="bi bi-journal-text"></i>
+                                        <span>Bitácora</span>
                                     </a>
                                 </li>
                             <?php endif; ?>

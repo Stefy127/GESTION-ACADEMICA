@@ -1,0 +1,43 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-image'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/getion-academica/app:latest'
+      - '-f'
+      - 'docker/Dockerfile'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-image'
+    args:
+      - 'push'
+      - 'gcr.io/getion-academica/app:latest'
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-cloud-run'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'gestion-academica'
+      - '--image'
+      - 'gcr.io/getion-academica/app:latest'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--add-cloudsql-instances'
+      - 'getion-academica:us-central1:gestion-academica-db'
+      - '--set-env-vars'
+      - 'DB_HOST=/cloudsql/getion-academica:us-central1:gestion-academica-db,DB_NAME=gestion_academica,DB_USER=app_user,DB_PASSWORD=Empanadas@37,DB_PORT=5432'
+
+images:
+  - 'gcr.io/getion-academica/app:latest'
+
+timeout: '1200s'
+
+options:
+  machineType: 'N1_HIGHCPU_8'

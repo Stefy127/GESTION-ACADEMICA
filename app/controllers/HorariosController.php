@@ -10,6 +10,9 @@ class HorariosController extends Controller
             return $this->view->renderWithLayout('errors/403', ['title' => 'Acceso Denegado']);
         }
 
+        // Registrar acceso al módulo
+        ActivityLogger::logView('horarios', null);
+
         $data = [
             'title' => 'Gestión de Horarios',
             'user' => $this->getCurrentUser(),

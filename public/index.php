@@ -13,8 +13,10 @@ require_once __DIR__ . '/../app/models/Auth.php';
 require_once __DIR__ . '/../app/models/Middleware.php';
 require_once __DIR__ . '/../app/views/View.php';
 require_once __DIR__ . '/../app/controllers/Controller.php';
+require_once __DIR__ . '/../app/helpers/ActivityLogger.php';
 require_once __DIR__ . '/../app/controllers/AuthController.php';
 require_once __DIR__ . '/../app/controllers/DashboardController.php';
+require_once __DIR__ . '/../app/controllers/BitacoraController.php';
 require_once __DIR__ . '/../app/controllers/HomeController.php';
 require_once __DIR__ . '/../app/controllers/UsuariosController.php';
 require_once __DIR__ . '/../app/controllers/DocentesController.php';
@@ -54,6 +56,9 @@ $router->post('/auth/reset-password', 'Auth@processResetPassword');
 $router->get('/dashboard', 'Dashboard@index');
 $router->get('/dashboard/chart-data', 'Dashboard@getChartData');
 
+// Rutas de bitácora
+$router->get('/bitacora', 'Bitacora@index');
+
 // Rutas de gestión de usuarios
 $router->get('/usuarios', 'Usuarios@index');
 $router->get('/usuarios/create', 'Usuarios@create');
@@ -62,11 +67,11 @@ $router->get('/usuarios/edit/{id}', 'Usuarios@edit');
 $router->post('/usuarios/update/{id}', 'Usuarios@update');
 $router->post('/usuarios/delete/{id}', 'Usuarios@delete');
 
-// Redirección de /docentes a /usuarios (mantener compatibilidad)
-$router->get('/docentes', function() {
-    header('Location: /usuarios');
-    exit;
-});
+// Rutas de gestión de docentes
+$router->get('/docentes', 'Docentes@index');
+$router->get('/docentes/edit/{id}', 'Docentes@edit');
+$router->post('/docentes/update/{id}', 'Docentes@update');
+$router->post('/docentes/delete/{id}', 'Docentes@delete');
 
 // Rutas de gestión de materias
 $router->get('/materias', 'Materias@index');
@@ -91,6 +96,7 @@ $router->post('/aulas/store', 'Aulas@store');
 $router->get('/aulas/edit/{id}', 'Aulas@edit');
 $router->post('/aulas/update/{id}', 'Aulas@update');
 $router->post('/aulas/delete/{id}', 'Aulas@delete');
+$router->get('/aulas/horarios/{id}', 'Aulas@horarios');
 
 // Rutas de gestión de horarios
 $router->get('/horarios', 'Horarios@index');

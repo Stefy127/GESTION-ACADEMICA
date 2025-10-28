@@ -32,7 +32,21 @@ class Database
     {
         $dbConfig = $this->config['database'];
         
-        $dsn = "pgsql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['name']}";
+        // Log para debugging (remover en producción)
+        error_log("DEBUG DB Config: " . json_encode($dbConfig));
+        
+        // Detectar si estamos en Cloud Run (host es un socket Unix)
+        if (strpos($dbConfig['host'], '/cloudsql/') === 0) {
+            // Cloud Run usa un socket Unix para Cloud SQL
+            $dsn = "pgsql:host={$dbConfig['host']};dbname={$dbConfig['name']}";
+            error_log("DEBUG: Using Cloud SQL Unix socket: {$dbConfig['host']}");
+        } else {
+            // Conexión local o directa
+            $dsn = "pgsql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['name']}";
+            error_log("DEBUG: Using direct connection: {$dbConfig['host']}:{$dbConfig['port']}");
+        }
+        
+        error_log("DEBUG: DSN = $dsn");
         
         try {
             $this->connection = new PDO($dsn, $dbConfig['user'], $dbConfig['password'], [
@@ -40,7 +54,9 @@ class Database
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false
             ]);
+            error_log("DEBUG: Database connection successful");
         } catch (PDOException $e) {
+            error_log("DEBUG: Database connection failed: " . $e->getMessage());
             throw new Exception("Error de conexión a la base de datos: " . $e->getMessage());
         }
     }

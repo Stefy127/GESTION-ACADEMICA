@@ -3,6 +3,9 @@ class AsistenciaController extends Controller
 {
     public function index()
     {
+        // Registrar acceso al módulo
+        ActivityLogger::logView('asistencia', null);
+        
         $user = $this->getCurrentUser();
         $data = [
             'title' => 'Control de Asistencia',
@@ -16,6 +19,9 @@ class AsistenciaController extends Controller
 
     public function registrar()
     {
+        // Registrar acceso al módulo
+        ActivityLogger::logView('asistencia/registrar', null);
+        
         $user = $this->getCurrentUser();
         $data = [
             'title' => 'Registrar Asistencia',

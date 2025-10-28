@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Servicio PHP
   php:
@@ -40,24 +38,25 @@ services:
     networks:
       - gestion_network
 
-  # Servicio phpMyAdmin (opcional para administración)
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin:latest
-    container_name: gestion_academica_phpmyadmin
+  # Servicio pgAdmin (correcto para PostgreSQL)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: gestion_academica_pgadmin
     environment:
-      PMA_HOST: postgres
-      PMA_PORT: 5432
-      PMA_USER: gestion_user
-      PMA_PASSWORD: gestion_password
+      PGADMIN_DEFAULT_EMAIL: admin@gestion.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
     ports:
       - "8081:80"
     depends_on:
       - postgres
     networks:
       - gestion_network
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
 
 volumes:
   postgres_data:
+  pgadmin_data:
 
 networks:
   gestion_network:
