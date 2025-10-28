@@ -38,17 +38,27 @@
             <div class="stat-icon">
                 <i class="bi bi-check-circle"></i>
             </div>
-            <div class="stat-value"><?php echo count(array_filter($asistencias, fn($a) => $a['asistio'])); ?></div>
-            <div class="stat-label">Asistencias</div>
+            <div class="stat-value">
+                <?php 
+                $presentes = array_filter($asistencias, fn($a) => isset($a['estado']) && $a['estado'] === 'presente');
+                echo count($presentes); 
+                ?>
+            </div>
+            <div class="stat-label">Presentes</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card">
             <div class="stat-icon">
-                <i class="bi bi-x-circle"></i>
+                <i class="bi bi-clock-history"></i>
             </div>
-            <div class="stat-value"><?php echo count(array_filter($asistencias, fn($a) => !$a['asistio'])); ?></div>
-            <div class="stat-label">Ausencias</div>
+            <div class="stat-value">
+                <?php 
+                $tardanzas = array_filter($asistencias, fn($a) => isset($a['estado']) && $a['estado'] === 'tardanza');
+                echo count($tardanzas); 
+                ?>
+            </div>
+            <div class="stat-label">Tardanzas</div>
         </div>
     </div>
     <div class="col-md-3">
@@ -56,7 +66,13 @@
             <div class="stat-icon">
                 <i class="bi bi-graph-up"></i>
             </div>
-            <div class="stat-value"><?php echo count($asistencias) > 0 ? round((count(array_filter($asistencias, fn($a) => $a['asistio'])) / count($asistencias)) * 100, 1) : 0; ?>%</div>
+            <div class="stat-value">
+                <?php 
+                $total = count($asistencias);
+                $presentesYTardanzas = count(array_filter($asistencias, fn($a) => isset($a['estado']) && in_array($a['estado'], ['presente', 'tardanza'])));
+                echo $total > 0 ? round(($presentesYTardanzas / $total) * 100, 1) : 0; 
+                ?>%
+            </div>
             <div class="stat-label">Porcentaje</div>
         </div>
     </div>
@@ -84,28 +100,35 @@
                     <?php foreach ($asistencias as $asistencia): ?>
                     <tr>
                         <td class="ps-4">
-                            <div class="fw-semibold"><?php echo htmlspecialchars($asistencia['docente']); ?></div>
+                            <div class="fw-semibold"><?php echo htmlspecialchars($asistencia['docente'] ?? 'N/A'); ?></div>
                         </td>
                         <td>
-                            <span class="text-muted"><?php echo htmlspecialchars($asistencia['materia']); ?></span>
+                            <span class="text-muted"><?php echo htmlspecialchars($asistencia['materia'] ?? 'N/A'); ?></span>
                         </td>
                         <td>
-                            <span class="badge bg-info"><?php echo htmlspecialchars($asistencia['grupo']); ?></span>
+                            <span class="badge bg-info"><?php echo htmlspecialchars($asistencia['grupo'] ?? 'N/A'); ?></span>
                         </td>
                         <td>
-                            <span class="text-muted"><?php echo date('d/m/Y', strtotime($asistencia['fecha'])); ?></span>
+                            <span class="text-muted"><?php echo isset($asistencia['fecha']) ? date('d/m/Y', strtotime($asistencia['fecha'])) : 'N/A'; ?></span>
                         </td>
                         <td>
-                            <span class="text-muted"><?php echo htmlspecialchars($asistencia['hora']); ?></span>
+                            <span class="text-muted"><?php echo htmlspecialchars($asistencia['hora'] ?? 'N/A'); ?></span>
                         </td>
                         <td>
-                            <?php if ($asistencia['asistio']): ?>
+                            <?php 
+                            $estado = $asistencia['estado'] ?? 'ausente';
+                            if ($estado === 'presente'): 
+                            ?>
                                 <span class="badge bg-success">
-                                    <i class="bi bi-check-circle me-1"></i>Presente
+                                    <i class="bi bi-check-circle me-1"></i>Puntual
+                                </span>
+                            <?php elseif ($estado === 'tardanza'): ?>
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-clock-history me-1"></i>Tarde
                                 </span>
                             <?php else: ?>
                                 <span class="badge bg-danger">
-                                    <i class="bi bi-x-circle me-1"></i>Ausente
+                                    <i class="bi bi-x-circle me-1"></i>No asistió
                                 </span>
                             <?php endif; ?>
                         </td>

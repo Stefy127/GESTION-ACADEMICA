@@ -23,19 +23,19 @@
                 <h5 class="card-title mb-0">Información de la Materia</h5>
             </div>
             <div class="card-body">
-                <form>
+                <form id="formEditarMateria" onsubmit="return false;">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Nombre de la Materia</label>
-                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($materia['nombre'] ?? ''); ?>" required>
+                            <input type="text" name="nombre" class="form-control" value="<?php echo htmlspecialchars($materia['nombre'] ?? ''); ?>" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Código</label>
-                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($materia['codigo'] ?? ''); ?>" required>
+                            <input type="text" name="codigo" class="form-control" value="<?php echo htmlspecialchars($materia['codigo'] ?? ''); ?>" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Nivel</label>
-                            <select class="form-select" required>
+                            <select name="nivel" class="form-select" required>
                                 <option value="">Seleccionar nivel</option>
                                 <option value="basico" <?php echo ($materia['nivel'] ?? '') === 'Básico' ? 'selected' : ''; ?>>Básico</option>
                                 <option value="intermedio" <?php echo ($materia['nivel'] ?? '') === 'Intermedio' ? 'selected' : ''; ?>>Intermedio</option>
@@ -44,37 +44,16 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Carga Horaria</label>
-                            <input type="number" class="form-control" value="<?php echo $materia['carga_horaria'] ?? ''; ?>" min="1" max="10" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Semestre</label>
-                            <select class="form-select" required>
-                                <option value="">Seleccionar semestre</option>
-                                <option value="1">Primer Semestre</option>
-                                <option value="2">Segundo Semestre</option>
-                                <option value="3">Tercer Semestre</option>
-                                <option value="4">Cuarto Semestre</option>
-                                <option value="5">Quinto Semestre</option>
-                                <option value="6">Sexto Semestre</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Tipo</label>
-                            <select class="form-select" required>
-                                <option value="">Seleccionar tipo</option>
-                                <option value="teorica">Teórica</option>
-                                <option value="practica">Práctica</option>
-                                <option value="mixta">Mixta</option>
-                            </select>
+                            <input type="number" name="carga_horaria" class="form-control" value="<?php echo $materia['carga_horaria'] ?? ''; ?>" min="1" max="10" required>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Descripción</label>
-                            <textarea class="form-control" rows="3" placeholder="Descripción de la materia..."></textarea>
+                            <textarea name="descripcion" class="form-control" rows="3" placeholder="Descripción de la materia..."><?php echo htmlspecialchars($materia['descripcion'] ?? ''); ?></textarea>
                         </div>
                     </div>
                     
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="btnSubmit">
                             <i class="bi bi-check-circle me-1"></i>Guardar Cambios
                         </button>
                         <a href="/materias" class="btn btn-outline-secondary ms-2">
@@ -82,6 +61,40 @@
                         </a>
                     </div>
                 </form>
+                
+<script>
+document.getElementById('formEditarMateria').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const btnSubmit = document.getElementById('btnSubmit');
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Guardando...';
+    
+    const formData = new FormData(this);
+    
+    fetch('/materias/update/<?php echo $materia['id']; ?>', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.href = data.redirect || '/materias';
+        } else {
+            alert('Error: ' + data.message);
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Guardar Cambios';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ocurrió un error al actualizar la materia');
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Guardar Cambios';
+    });
+});
+</script>
             </div>
         </div>
     </div>

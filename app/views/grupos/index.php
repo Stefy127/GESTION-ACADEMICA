@@ -47,7 +47,7 @@
                             </span>
                         </td>
                         <td>
-                            <span class="text-muted"><?php echo htmlspecialchars($grupo['materia']); ?></span>
+                            <span class="text-muted"><?php echo htmlspecialchars($grupo['materia_nombre'] ?? 'N/A'); ?></span>
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">

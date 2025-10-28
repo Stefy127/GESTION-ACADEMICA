@@ -101,6 +101,39 @@
 
 <!-- Gráficos Modernos -->
 <div class="row g-4 mb-5">
+    <?php if ($user['rol'] === 'docente'): ?>
+    <!-- Vista para Docentes -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title mb-1 fw-bold">Mis Asistencias</h5>
+                    <p class="text-muted mb-0 small">Últimos 30 días</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 400px;">
+                    <canvas id="asistenciaChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 col-lg-5">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-1 fw-bold">Mis Horarios</h5>
+                <p class="text-muted mb-0 small">Distribución semanal</p>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 400px;">
+                    <canvas id="horariosChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php else: ?>
+    <!-- Vista para Administradores/Coordinadores -->
     <div class="col-xl-8 col-lg-7">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -129,23 +162,26 @@
             </div>
         </div>
     </div>
-
+    
     <div class="col-xl-4 col-lg-5">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-1 fw-bold">Horarios por Día</h5>
-                <p class="text-muted mb-0 small">Distribución semanal</p>
+                <h5 class="card-title mb-1 fw-bold">Reportes del Sistema</h5>
+                <p class="text-muted mb-0 small">Estadísticas generales</p>
             </div>
             <div class="card-body">
-                <div class="chart-container" style="height: 400px;">
-                    <canvas id="horariosChart"></canvas>
-                </div>
+                <p class="text-muted text-center py-5">
+                    <i class="bi bi-graph-up fs-3"></i><br>
+                    Visualización de reportes
+                </p>
             </div>
         </div>
     </div>
+    <?php endif; ?>
 </div>
 
 <!-- Tabla de Actividades Recientes -->
+<?php if (in_array($user['rol'], ['administrador', 'coordinador', 'autoridad'])): ?>
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -211,84 +247,26 @@
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 <script>
+// Los gráficos se cargan desde app.js
+// Solo cargar actividades recientes aquí
 document.addEventListener('DOMContentLoaded', function() {
-    loadCharts();
     loadRecentActivities();
 });
 
-function loadCharts() {
-    // Cargar datos de asistencia mensual
-    fetch('/dashboard/chart-data?type=asistencia_mensual')
-        .then(response => response.json())
-        .then(data => {
-            const ctx = document.getElementById('asistenciaChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        label: 'Total Clases',
-                        data: data.datasets.total,
-                        borderColor: 'rgb(75, 192, 192)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        tension: 0.1
-                    }, {
-                        label: 'Clases con Asistencia',
-                        data: data.datasets.presentes,
-                        borderColor: 'rgb(255, 99, 132)',
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        });
-
-    // Cargar datos de horarios por día
-    fetch('/dashboard/chart-data?type=horarios_por_dia')
-        .then(response => response.json())
-        .then(data => {
-            const ctx = document.getElementById('horariosChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        data: data.data,
-                        backgroundColor: [
-                            '#FF6384',
-                            '#36A2EB',
-                            '#FFCE56',
-                            '#4BC0C0',
-                            '#9966FF',
-                            '#FF9F40',
-                            '#FF6384'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-        });
-}
-
 function loadRecentActivities() {
+    <?php if (!isset($user) || !in_array($user['rol'], ['administrador', 'coordinador', 'autoridad'])): ?>
+    return; // No cargar actividades para docentes
+    <?php endif; ?>
+    
     // Simular carga de actividades recientes
     const activities = [
-        { usuario: 'Juan Pérez', accion: 'Inició sesión', fecha: '2024-01-15 10:30', ip: '192.168.1.100' },
-        { usuario: 'María González', accion: 'Registró asistencia', fecha: '2024-01-15 10:25', ip: '192.168.1.101' },
-        { usuario: 'Carlos López', accion: 'Actualizó horario', fecha: '2024-01-15 10:20', ip: '192.168.1.102' }
+        { usuario: 'Admin Sistema', accion: 'Inició sesión', fecha: 'Hace 5 minutos', ip: '192.168.1.100' },
+        { usuario: 'Juan Pérez', accion: 'Registró asistencia', fecha: 'Hace 15 minutos', ip: '192.168.1.101' },
+        { usuario: 'María González', accion: 'Actualizó horario', fecha: 'Hace 1 hora', ip: '192.168.1.102' },
+        { usuario: 'Carlos López', accion: 'Creó nuevo grupo', fecha: 'Hace 2 horas', ip: '192.168.1.103' }
     ];
 
     const tbody = document.getElementById('activitiesTableBody');

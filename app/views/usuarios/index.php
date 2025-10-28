@@ -60,8 +60,8 @@
                             <span class="text-muted"><?php echo htmlspecialchars($usuario['email']); ?></span>
                         </td>
                         <td>
-                            <span class="badge bg-<?php echo $usuario['rol'] === 'administrador' ? 'danger' : ($usuario['rol'] === 'coordinador' ? 'warning' : 'info'); ?>">
-                                <?php echo ucfirst($usuario['rol']); ?>
+                            <span class="badge bg-<?php echo ($usuario['rol'] ?? 'docente') === 'administrador' ? 'danger' : (($usuario['rol'] ?? 'docente') === 'coordinador' ? 'warning' : 'info'); ?>">
+                                <?php echo ucfirst($usuario['rol'] ?? 'docente'); ?>
                             </span>
                         </td>
                         <td>
@@ -84,3 +84,29 @@
         </div>
     </div>
 </div>
+
+<script>
+function confirmDelete(id) {
+    if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+        fetch(`/usuarios/delete/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Usuario eliminado exitosamente');
+                location.reload();
+            } else {
+                alert('Error al eliminar el usuario: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al eliminar el usuario');
+        });
+    }
+}
+</script>

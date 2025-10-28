@@ -33,7 +33,7 @@ class Auth
     {
         $sql = "SELECT u.*, r.nombre as rol_nombre, r.permisos 
                 FROM usuarios u 
-                JOIN roles r ON u.rol_id = r.id 
+                LEFT JOIN roles r ON u.rol_id = r.id 
                 WHERE u.email = :email AND u.activo = true";
         
         $user = $this->db->query($sql, ['email' => $email]);
@@ -65,8 +65,8 @@ class Auth
                 'nombre' => $user['nombre'],
                 'apellido' => $user['apellido'],
                 'email' => $user['email'],
-                'rol' => $user['rol_nombre'],
-                'permisos' => json_decode($user['permisos'], true)
+                'rol' => $user['rol_nombre'] ?? 'sin_rol',
+                'permisos' => $user['permisos'] ? json_decode($user['permisos'], true) : []
             ]
         ];
     }
@@ -104,7 +104,7 @@ class Auth
         
         $sql = "SELECT u.*, r.nombre as rol_nombre, r.permisos 
                 FROM usuarios u 
-                JOIN roles r ON u.rol_id = r.id 
+                LEFT JOIN roles r ON u.rol_id = r.id 
                 WHERE u.id = :id AND u.activo = true";
         
         $user = $this->db->query($sql, ['id' => $_SESSION['user_id']]);
@@ -120,8 +120,8 @@ class Auth
             'nombre' => $user['nombre'],
             'apellido' => $user['apellido'],
             'email' => $user['email'],
-            'rol' => $user['rol_nombre'],
-            'permisos' => json_decode($user['permisos'], true)
+            'rol' => $user['rol_nombre'] ?? 'sin_rol',
+            'permisos' => $user['permisos'] ? json_decode($user['permisos'], true) : []
         ];
     }
     

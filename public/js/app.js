@@ -364,33 +364,70 @@ function loadCharts() {
     loadHorariosChart();
 }
 
+let asistenciaChart = null;
+let horariosChart = null;
+
 function loadAsistenciaChart() {
     const ctx = document.getElementById('asistenciaChart');
     if (!ctx) return;
     
-    fetch('/dashboard/chart-data?type=asistencia')
+    // Destruir gráfico anterior si existe
+    if (asistenciaChart) {
+        asistenciaChart.destroy();
+        asistenciaChart = null;
+    }
+    
+    fetch('/dashboard/chart-data?type=asistencia_mensual')
         .then(response => response.json())
         .then(data => {
-            new Chart(ctx, {
+            console.log('Datos de asistencia recibidos:', data);
+            
+            // Preparar datasets según el tipo de datos
+            let datasets = [];
+            
+            if (data.datasets && data.datasets.total && data.datasets.presentes) {
+                // Datos con múltiples datasets (admin view)
+                datasets = [
+                    {
+                        label: 'Total Clases',
+                        data: data.datasets.total,
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Con Asistencia',
+                        data: data.datasets.presentes,
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        tension: 0.1
+                    }
+                ];
+            } else {
+                // Datos simples (docente view)
+                datasets = [{
+                    label: 'Mis Asistencias',
+                    data: data.datasets?.total || data.data || [],
+                    borderColor: App.config.chartColors.primary,
+                    backgroundColor: App.config.chartColors.primary + '20',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }];
+            }
+            
+            asistenciaChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: data.labels,
-                    datasets: [{
-                        label: 'Asistencia',
-                        data: data.values,
-                        borderColor: App.config.chartColors.primary,
-                        backgroundColor: App.config.chartColors.primary + '20',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
-                    }]
+                    labels: data.labels || [],
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            display: false
+                            display: datasets.length > 1
                         }
                     },
                     scales: {
@@ -408,6 +445,7 @@ function loadAsistenciaChart() {
                     }
                 }
             });
+            console.log('Gráfico de asistencia cargado correctamente');
         })
         .catch(error => {
             console.error('Error loading chart:', error);
@@ -418,15 +456,23 @@ function loadHorariosChart() {
     const ctx = document.getElementById('horariosChart');
     if (!ctx) return;
     
-    fetch('/dashboard/chart-data?type=horarios')
+    // Destruir gráfico anterior si existe
+    if (horariosChart) {
+        horariosChart.destroy();
+        horariosChart = null;
+    }
+    
+    fetch('/dashboard/chart-data?type=horarios_por_dia')
         .then(response => response.json())
         .then(data => {
-            new Chart(ctx, {
+            console.log('Datos de horarios recibidos:', data);
+            
+            horariosChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: data.labels,
+                    labels: data.labels || [],
                     datasets: [{
-                        data: data.values,
+                        data: data.data || [],
                         backgroundColor: [
                             App.config.chartColors.primary,
                             App.config.chartColors.success,
@@ -451,6 +497,7 @@ function loadHorariosChart() {
                     }
                 }
             });
+            console.log('Gráfico de horarios cargado correctamente');
         })
         .catch(error => {
             console.error('Error loading chart:', error);

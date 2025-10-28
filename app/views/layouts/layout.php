@@ -62,7 +62,7 @@
 
     <!-- Contenido principal -->
     <main class="container-fluid">
-        <?php if (isset($user) && $user['rol'] !== 'docente'): ?>
+        <?php if (isset($user)): ?>
             <!-- Sidebar -->
             <div class="row">
                 <div class="col-md-2 sidebar">
@@ -88,12 +88,6 @@
                                     <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/usuarios') !== false) ? 'active' : ''; ?>" href="/usuarios">
                                         <i class="bi bi-people"></i>
                                         <span>Usuarios</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/docentes') !== false) ? 'active' : ''; ?>" href="/docentes">
-                                        <i class="bi bi-person-badge"></i>
-                                        <span>Docentes</span>
                                     </a>
                                 </li>
                                 <li class="nav-item">
@@ -127,12 +121,30 @@
                             <h6 class="text-uppercase text-muted fw-bold mb-3">Actividades</h6>
                         </div>
                         <ul class="nav flex-column">
+                            <?php if ($user['rol'] === 'docente'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/asistencia/registrar') !== false) ? 'active' : ''; ?>" href="/asistencia/registrar">
+                                    <i class="bi bi-plus-circle"></i>
+                                    <span>Registrar Asistencia</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?php 
+                                    $isAsistenciaActive = (strpos($_SERVER['REQUEST_URI'], '/asistencia') !== false && strpos($_SERVER['REQUEST_URI'], '/asistencia/registrar') === false);
+                                    echo $isAsistenciaActive ? 'active' : ''; 
+                                ?>" href="/asistencia">
+                                    <i class="bi bi-list-check"></i>
+                                    <span>Mis Asistencias</span>
+                                </a>
+                            </li>
+                            <?php else: ?>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/asistencia') !== false) ? 'active' : ''; ?>" href="/asistencia">
                                     <i class="bi bi-check-circle"></i>
                                     <span>Asistencia</span>
                                 </a>
                             </li>
+                            <?php endif; ?>
                             
                             <?php if (in_array($user['rol'], ['administrador', 'coordinador', 'autoridad'])): ?>
                                 <li class="nav-item">

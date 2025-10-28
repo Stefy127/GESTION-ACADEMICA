@@ -47,26 +47,59 @@ class MateriasController extends Controller
 
         return $this->view->renderWithLayout('materias/edit', $data);
     }
-
+    
     private function getMaterias()
     {
-        return [
-            ['id' => 1, 'nombre' => 'Matemáticas', 'codigo' => 'MAT101', 'nivel' => 'Básico', 'carga_horaria' => 4],
-            ['id' => 2, 'nombre' => 'Física', 'codigo' => 'FIS101', 'nivel' => 'Básico', 'carga_horaria' => 3],
-            ['id' => 3, 'nombre' => 'Química', 'codigo' => 'QUI101', 'nivel' => 'Básico', 'carga_horaria' => 3],
-            ['id' => 4, 'nombre' => 'Programación', 'codigo' => 'PROG101', 'nivel' => 'Intermedio', 'carga_horaria' => 5],
-            ['id' => 5, 'nombre' => 'Bases de Datos', 'codigo' => 'BD101', 'nivel' => 'Intermedio', 'carga_horaria' => 4]
-        ];
+        try {
+            $db = Database::getInstance();
+            return $db->query("SELECT * FROM materias WHERE activa = true ORDER BY nombre");
+        } catch (Exception $e) {
+            return [];
+        }
     }
 
     private function getMateria($id)
     {
-        $materias = $this->getMaterias();
-        foreach ($materias as $materia) {
-            if ($materia['id'] == $id) {
-                return $materia;
-            }
+        try {
+            $db = Database::getInstance();
+            $result = $db->query("SELECT * FROM materias WHERE id = :id", [':id' => $id]);
+            return $result ? $result[0] : null;
+        } catch (Exception $e) {
+            return null;
         }
-        return null;
+    }
+    
+    public function store()
+    {
+        if (!Middleware::checkRole(['administrador', 'coordinador'])) {
+            echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
+            return;
+        }
+        try {
+            $db = Database::getInstance();
+            $sql = "INSERT INTO materias (codigo, nombre, descripcion, nivel, carga_horaria) VALUES (:codigo, :nombre, :descripcion, :nivel, :carga_horaria)";
+            $params = [':codigo' => $_POST['codigo'] ?? '', ':nombre' => $_POST['nombre'] ?? '', ':descripcion' => $_POST['descripcion'] ?? '', ':nivel' => $_POST['nivel'] ?? '', ':carga_horaria' => intval($_POST['carga_horaria'] ?? 0)];
+            $db->query($sql, $params);
+            echo json_encode(['success' => true, 'message' => 'Materia creada', 'redirect' => '/materias']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
+    
+    public function update($id)
+    {
+        if (!Middleware::checkRole(['administrador', 'coordinador'])) {
+            echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
+            return;
+        }
+        try {
+            $db = Database::getInstance();
+            $sql = "UPDATE materias SET codigo = :codigo, nombre = :nombre, descripcion = :descripcion, nivel = :nivel, carga_horaria = :carga_horaria WHERE id = :id";
+            $params = [':codigo' => $_POST['codigo'] ?? '', ':nombre' => $_POST['nombre'] ?? '', ':descripcion' => $_POST['descripcion'] ?? '', ':nivel' => $_POST['nivel'] ?? '', ':carga_horaria' => intval($_POST['carga_horaria'] ?? 0), ':id' => $id];
+            $db->query($sql, $params);
+            echo json_encode(['success' => true, 'message' => 'Materia actualizada', 'redirect' => '/materias']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
     }
 }

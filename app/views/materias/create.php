@@ -23,19 +23,19 @@
                 <h5 class="card-title mb-0">Información de la Materia</h5>
             </div>
             <div class="card-body">
-                <form>
+                <form id="formCrearMateria" onsubmit="return false;">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Nombre de la Materia</label>
-                            <input type="text" class="form-control" placeholder="Ej: Matemáticas" required>
+                            <input type="text" name="nombre" class="form-control" placeholder="Ej: Matemáticas" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Código</label>
-                            <input type="text" class="form-control" placeholder="Ej: MAT101" required>
+                            <input type="text" name="codigo" class="form-control" placeholder="Ej: MAT101" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Nivel</label>
-                            <select class="form-select" required>
+                            <select name="nivel" class="form-select" required>
                                 <option value="">Seleccionar nivel</option>
                                 <option value="basico">Básico</option>
                                 <option value="intermedio">Intermedio</option>
@@ -44,11 +44,11 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Carga Horaria</label>
-                            <input type="number" class="form-control" placeholder="4" min="1" max="10" required>
+                            <input type="number" name="carga_horaria" class="form-control" placeholder="4" min="1" max="10" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Semestre</label>
-                            <select class="form-select" required>
+                            <select name="semestre" class="form-select" required>
                                 <option value="">Seleccionar semestre</option>
                                 <option value="1">Primer Semestre</option>
                                 <option value="2">Segundo Semestre</option>
@@ -60,7 +60,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Tipo</label>
-                            <select class="form-select" required>
+                            <select name="tipo" class="form-select" required>
                                 <option value="">Seleccionar tipo</option>
                                 <option value="teorica">Teórica</option>
                                 <option value="practica">Práctica</option>
@@ -69,12 +69,12 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label">Descripción</label>
-                            <textarea class="form-control" rows="3" placeholder="Descripción de la materia..."></textarea>
+                            <textarea name="descripcion" class="form-control" rows="3" placeholder="Descripción de la materia..."></textarea>
                         </div>
                     </div>
                     
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="btnSubmit">
                             <i class="bi bi-check-circle me-1"></i>Crear Materia
                         </button>
                         <a href="/materias" class="btn btn-outline-secondary ms-2">
@@ -82,6 +82,40 @@
                         </a>
                     </div>
                 </form>
+                
+<script>
+document.getElementById('formCrearMateria').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const btnSubmit = document.getElementById('btnSubmit');
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Creando...';
+    
+    const formData = new FormData(this);
+    
+    fetch('/materias/store', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.href = data.redirect || '/materias';
+        } else {
+            alert('Error: ' + data.message);
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Crear Materia';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ocurrió un error al crear la materia');
+        btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Crear Materia';
+    });
+});
+</script>
             </div>
         </div>
     </div>
