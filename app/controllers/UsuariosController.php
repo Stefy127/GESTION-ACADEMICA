@@ -11,6 +11,9 @@ class UsuariosController extends Controller
             return $this->view->renderWithLayout('errors/403', ['title' => 'Acceso Denegado']);
         }
 
+        // Registrar acceso al módulo
+        ActivityLogger::logView('usuarios', null);
+
         $data = [
             'title' => 'Gestión de Usuarios',
             'user' => $this->getCurrentUser(),
@@ -115,6 +118,19 @@ class UsuariosController extends Controller
                 ':rol_id' => $rolId
             ];
             $db->query($sql, $params);
+            
+            // Obtener el ID del usuario creado
+            $userIdSql = "SELECT id FROM usuarios WHERE email = :email ORDER BY created_at DESC LIMIT 1";
+            $userIdResult = $db->query($userIdSql, [':email' => $_POST['email']]);
+            $userId = $userIdResult && count($userIdResult) > 0 ? $userIdResult[0]['id'] : null;
+            
+            // Registrar actividad
+            ActivityLogger::logCreate('usuarios', $userId, [
+                'nombre' => $_POST['nombre'] ?? '',
+                'apellido' => $_POST['apellido'] ?? '',
+                'email' => $_POST['email'] ?? ''
+            ]);
+            
             echo json_encode(['success' => true, 'message' => 'Usuario creado exitosamente', 'redirect' => '/usuarios']);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
@@ -151,7 +167,19 @@ class UsuariosController extends Controller
                 $params[':password'] = $hashedPassword;
             }
             
+            // Obtener datos anteriores antes de actualizar
+            $oldUserSql = "SELECT * FROM usuarios WHERE id = :id";
+            $oldUser = $db->query($oldUserSql, [':id' => $id]);
+            
             $db->query($sql, $params);
+            
+            // Registrar actividad
+            ActivityLogger::logUpdate('usuarios', $id, $oldUser, [
+                'nombre' => $_POST['nombre'] ?? '',
+                'apellido' => $_POST['apellido'] ?? '',
+                'email' => $_POST['email'] ?? ''
+            ]);
+            
             echo json_encode(['success' => true, 'message' => 'Usuario actualizado', 'redirect' => '/usuarios']);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
@@ -166,8 +194,17 @@ class UsuariosController extends Controller
         }
         try {
             $db = Database::getInstance();
+            
+            // Obtener datos del usuario antes de eliminar
+            $userSql = "SELECT * FROM usuarios WHERE id = :id";
+            $userData = $db->query($userSql, [':id' => $id]);
+            
             $sql = "UPDATE usuarios SET activo = false WHERE id = :id";
             $db->query($sql, [':id' => $id]);
+            
+            // Registrar actividad
+            ActivityLogger::logDelete('usuarios', $id, $userData);
+            
             echo json_encode(['success' => true, 'message' => 'Usuario eliminado', 'redirect' => '/usuarios']);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);

@@ -1,0 +1,51 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+DEPLOY_GOOGLE_CLOUD.md
+*.md
+
+# Docker
+docker-compose.yml
+docker-compose.*.yml
+docker/
+
+# Environment
+.env
+.env.*
+.env.example
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+
+# Node modules (si tienes alguno)
+node_modules/
+
+# Composer (solo incluir vendor si es necesario)
+# vendor/
+
+# Cache
+.cache/
+*.cache
+
+# Backup files
+*.bak
+*.backup
+*_backup

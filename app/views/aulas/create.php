@@ -23,37 +23,37 @@
                 <h5 class="card-title mb-0">Información de la Aula</h5>
             </div>
             <div class="card-body">
-                <form>
+                <form id="createAulaForm">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Nombre de la Aula</label>
-                            <input type="text" class="form-control" placeholder="Ej: Aula 101" required>
+                            <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" name="nombre" class="form-control" placeholder="Aula 101" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Capacidad</label>
-                            <input type="number" class="form-control" placeholder="30" min="1" max="100" required>
+                            <label class="form-label">Código <span class="text-danger">*</span></label>
+                            <input type="text" name="codigo" class="form-control" placeholder="A101" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Tipo de Aula</label>
-                            <select class="form-select" required>
+                            <label class="form-label">Capacidad <span class="text-danger">*</span></label>
+                            <input type="number" name="capacidad" class="form-control" placeholder="30" min="1" max="200" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                            <select name="tipo" class="form-select" required>
                                 <option value="">Seleccionar tipo</option>
-                                <option value="teoria">Teoría</option>
-                                <option value="laboratorio">Laboratorio</option>
-                                <option value="computacion">Computación</option>
-                                <option value="audiovisual">Audiovisual</option>
+                                <option value="Teórica">Teórica</option>
+                                <option value="Laboratorio">Laboratorio</option>
+                                <option value="Computación">Computación</option>
+                                <option value="Auditorio">Auditorio</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Estado</label>
-                            <select class="form-select" required>
-                                <option value="disponible">Disponible</option>
-                                <option value="mantenimiento">En Mantenimiento</option>
-                                <option value="ocupada">Ocupada</option>
-                            </select>
+                            <label class="form-label">Ubicación</label>
+                            <input type="text" name="ubicacion" class="form-control" placeholder="Edificio A - Primer Piso">
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Descripción</label>
-                            <textarea class="form-control" rows="3" placeholder="Descripción adicional de la aula..."></textarea>
+                            <label class="form-label">Equipamiento</label>
+                            <textarea name="equipamiento" class="form-control" rows="3" placeholder="Ej: Proyector, pizarrón, aire acondicionado..."></textarea>
                         </div>
                     </div>
                     
@@ -80,13 +80,48 @@
                     <i class="bi bi-info-circle me-2"></i>
                     <strong>Tipos de Aula:</strong>
                 </div>
-                <ul class="list-unstyled">
-                    <li><i class="bi bi-check text-success me-2"></i><strong>Teoría:</strong> Para clases magistrales</li>
+                <ul class="list-unstyled small">
+                    <li><i class="bi bi-check text-success me-2"></i><strong>Teórica:</strong> Para clases magistrales</li>
                     <li><i class="bi bi-check text-success me-2"></i><strong>Laboratorio:</strong> Para prácticas</li>
                     <li><i class="bi bi-check text-success me-2"></i><strong>Computación:</strong> Con equipos de cómputo</li>
-                    <li><i class="bi bi-check text-success me-2"></i><strong>Audiovisual:</strong> Con proyector y audio</li>
+                    <li><i class="bi bi-check text-success me-2"></i><strong>Auditorio:</strong> Para conferencias</li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('createAulaForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Creando...';
+    submitBtn.disabled = true;
+    
+    fetch('/aulas/store', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.href = data.redirect || '/aulas';
+        } else {
+            alert('Error: ' + data.message);
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ocurrió un error al crear el aula');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+</script>

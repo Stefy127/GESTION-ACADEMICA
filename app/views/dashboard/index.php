@@ -180,108 +180,15 @@
     <?php endif; ?>
 </div>
 
-<!-- Tabla de Actividades Recientes -->
-<?php if (in_array($user['rol'], ['administrador', 'coordinador', 'autoridad'])): ?>
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="card-title mb-1 fw-bold">Actividades Recientes</h5>
-                    <p class="text-muted mb-0 small">Últimas acciones del sistema</p>
-                </div>
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" onclick="refreshActivities()">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </button>
-                    <button class="btn btn-outline-secondary" onclick="exportActivities()">
-                        <i class="bi bi-download"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="border-0 ps-4">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-person me-2 text-primary"></i>
-                                        Usuario
-                                    </div>
-                                </th>
-                                <th class="border-0">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-lightning me-2 text-warning"></i>
-                                        Acción
-                                    </div>
-                                </th>
-                                <th class="border-0">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-calendar me-2 text-info"></i>
-                                        Fecha
-                                    </div>
-                                </th>
-                                <th class="border-0">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-geo-alt me-2 text-secondary"></i>
-                                        IP
-                                    </div>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody id="activitiesTableBody">
-                            <!-- Se cargará dinámicamente -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent">
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">Mostrando las últimas 10 actividades</small>
-                    <a href="/logs" class="btn btn-sm btn-outline-primary">
-                        Ver Todas <i class="bi bi-arrow-right ms-1"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
-
 <script>
 // Los gráficos se cargan desde app.js
-// Solo cargar actividades recientes aquí
-document.addEventListener('DOMContentLoaded', function() {
-    loadRecentActivities();
-});
-
-function loadRecentActivities() {
-    <?php if (!isset($user) || !in_array($user['rol'], ['administrador', 'coordinador', 'autoridad'])): ?>
-    return; // No cargar actividades para docentes
-    <?php endif; ?>
-    
-    // Simular carga de actividades recientes
-    const activities = [
-        { usuario: 'Admin Sistema', accion: 'Inició sesión', fecha: 'Hace 5 minutos', ip: '192.168.1.100' },
-        { usuario: 'Juan Pérez', accion: 'Registró asistencia', fecha: 'Hace 15 minutos', ip: '192.168.1.101' },
-        { usuario: 'María González', accion: 'Actualizó horario', fecha: 'Hace 1 hora', ip: '192.168.1.102' },
-        { usuario: 'Carlos López', accion: 'Creó nuevo grupo', fecha: 'Hace 2 horas', ip: '192.168.1.103' }
-    ];
-
-    const tbody = document.getElementById('activitiesTableBody');
-    tbody.innerHTML = activities.map(activity => `
-        <tr>
-            <td>${activity.usuario}</td>
-            <td>${activity.accion}</td>
-            <td>${activity.fecha}</td>
-            <td>${activity.ip}</td>
-        </tr>
-    `).join('');
-}
 
 function refreshDashboard() {
     location.reload();
+}
+
+function exportActivities() {
+    alert('Función de exportación en desarrollo');
 }
 
 function exportChart(type) {

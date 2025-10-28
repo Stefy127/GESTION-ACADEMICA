@@ -22,6 +22,10 @@ class DashboardController extends Controller
         $this->middleware->requireAuth();
         
         $user = $this->middleware->getCurrentUser();
+        
+        // Registrar acceso al dashboard
+        ActivityLogger::logView('dashboard', null);
+        
         $stats = $this->getDashboardStats($user);
         
         $data = [
@@ -32,6 +36,7 @@ class DashboardController extends Controller
         
         return $this->view->renderWithLayout('dashboard/index', $data);
     }
+    
     
     /**
      * Obtener estadísticas del dashboard
