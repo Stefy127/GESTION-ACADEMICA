@@ -113,7 +113,7 @@ $ausencias = $ausencias ?? [];
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php if (!empty($ausencia['archivo_soporte'])): ?>
+                                <?php if (!empty($ausencia['archivo_soporte_name'])): ?>
                                 <a href="/ausencias/download/<?php echo $ausencia['id']; ?>" class="btn btn-sm btn-outline-secondary">
                                     <i class="bi bi-paperclip me-1"></i>Descargar
                                 </a>
@@ -132,7 +132,7 @@ $ausencias = $ausencias ?? [];
                                             data-fecha="<?php echo $ausencia['fecha']; ?>"
                                             data-justificacion="<?php echo htmlspecialchars($ausencia['justificacion'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                                             data-estado="<?php echo $estado; ?>"
-                                            data-archivo="<?php echo $ausencia['archivo_soporte'] ?? ''; ?>">
+                                            data-archivo="<?php echo $ausencia['archivo_soporte_name'] ?? ''; ?>">
                                         <i class="bi bi-pencil me-1"></i>Editar
                                     </button>
                                     <button type="button"

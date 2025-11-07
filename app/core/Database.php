@@ -55,8 +55,8 @@ class Database
                 PDO::ATTR_EMULATE_PREPARES => false
             ]);
             
-            // Configurar zona horaria de Colombia en PostgreSQL
-            $this->connection->exec("SET timezone = 'America/Bogota'");
+            // Configurar zona horaria de Bolivia en PostgreSQL
+            $this->connection->exec("SET timezone = 'America/La_Paz'");
             
             error_log("DEBUG: Database connection successful");
         } catch (PDOException $e) {

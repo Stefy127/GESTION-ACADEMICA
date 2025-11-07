@@ -19,7 +19,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Configurar zona horaria
-date_default_timezone_set('America/Bogota'); // Colombia UTC-5
+date_default_timezone_set('America/La_Paz'); // Bolivia UTC-4
 
 // Cargar clases core (infraestructura básica)
 require_once __DIR__ . '/../app/core/Database.php';
