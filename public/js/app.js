@@ -54,6 +54,9 @@ const App = {
         
         // Gráficos
         this.initCharts();
+
+        // Gestión de ausencias
+        this.initAusencias();
     },
     
     // Configurar notificaciones
@@ -348,6 +351,421 @@ const App = {
             }
         });
     },
+
+    decodeHtml(html) {
+        const txt = document.createElement('textarea');
+        txt.innerHTML = html || '';
+        return txt.value;
+    },
+
+    initAusencias() {
+        console.log('Inicializando gestión de ausencias...');
+        
+        // Usar delegación de eventos para el botón, ya que puede no existir al inicio
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#btnNuevaAusencia')) {
+                e.preventDefault();
+                console.log('Botón de nueva ausencia clickeado');
+                this.openAusenciaModal();
+            }
+        });
+
+        // Inicializar modal si existe
+        const modalEl = document.getElementById('ausenciaModal');
+        if (modalEl) {
+            this.ausenciaModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            this.ausenciaModalLabel = document.getElementById('ausenciaModalLabel');
+            this.ausenciaForm = document.getElementById('ausenciaForm');
+            this.ausenciaError = document.getElementById('ausenciaError');
+            this.ausenciaSubmitBtn = document.getElementById('ausenciaSubmitBtn');
+            this.ausenciaArchivoActual = document.getElementById('ausenciaArchivoActual');
+            this.ausenciaSelect = document.getElementById('ausencia_asistencia');
+            this.ausenciaFecha = document.getElementById('ausencia_fecha');
+            this.ausenciaJustificacion = document.getElementById('ausencia_justificacion');
+            this.ausenciaEstado = document.getElementById('ausencia_estado');
+            this.ausenciaDocenteId = document.getElementById('ausencia_docente_id');
+            this.ausenciaDocenteDisplay = document.getElementById('ausencia_docente_display');
+            this.ausenciaIdInput = document.getElementById('ausencia_id');
+
+            if (this.ausenciaSelect) {
+                this.ausenciaSelect.addEventListener('change', () => this.handleAusenciaAsistenciaChange(this.ausenciaSelect));
+            }
+
+            if (this.ausenciaForm) {
+                this.ausenciaForm.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    this.submitAusenciaForm();
+                });
+            }
+        }
+
+        // Delegación de eventos para botones de editar y eliminar
+        document.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.btn-editar-ausencia');
+            if (editBtn) {
+                e.preventDefault();
+                this.openAusenciaModal(editBtn.dataset);
+            }
+
+            const deleteBtn = e.target.closest('.btn-eliminar-ausencia');
+            if (deleteBtn) {
+                e.preventDefault();
+                this.openDeleteAusenciaModal(deleteBtn.dataset.id);
+            }
+        });
+
+        // Inicializar modal de eliminación si existe
+        const deleteModalEl = document.getElementById('deleteAusenciaModal');
+        if (deleteModalEl) {
+            this.ausenciaDeleteModal = bootstrap.Modal.getOrCreateInstance(deleteModalEl);
+            this.ausenciaDeleteForm = document.getElementById('ausenciaDeleteForm');
+            this.ausenciaDeleteBtn = document.getElementById('ausenciaDeleteBtn');
+            this.ausenciaDeleteIdInput = document.getElementById('ausencia_delete_id');
+
+            if (this.ausenciaDeleteForm) {
+                this.ausenciaDeleteForm.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    this.submitAusenciaDelete();
+                });
+            }
+        }
+    },
+
+    resetAusenciaForm() {
+        if (!this.ausenciaForm) return;
+
+        this.ausenciaForm.reset();
+        this.clearAusenciaErrors();
+
+        // Borrar errores de validación
+        this.ausenciaForm.querySelectorAll('.is-invalid').forEach(field => {
+            this.clearFieldError(field);
+        });
+
+        if (this.ausenciaArchivoActual) {
+            this.ausenciaArchivoActual.classList.add('d-none');
+            this.ausenciaArchivoActual.textContent = '';
+        }
+
+        if (this.ausenciaDocenteDisplay) {
+            this.ausenciaDocenteDisplay.value = '';
+        }
+
+        if (this.ausenciaDocenteId) {
+            this.ausenciaDocenteId.value = '';
+        }
+
+        if (this.ausenciaSelect) {
+            this.ausenciaSelect.value = '';
+            // Eliminar opciones temporales
+            this.ausenciaSelect.querySelectorAll('option[data-temp="true"]').forEach(option => option.remove());
+        }
+    },
+
+    openAusenciaModal(data = null) {
+        console.log('Abriendo modal de ausencia...', data);
+        
+        // Inicializar modal si no está inicializado
+        const modalEl = document.getElementById('ausenciaModal');
+        if (!modalEl) {
+            console.error('Modal de ausencia no encontrado en el DOM');
+            return;
+        }
+
+        console.log('Modal encontrado, inicializando...');
+        if (!this.ausenciaModal) {
+            this.ausenciaModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            console.log('Modal de Bootstrap inicializado');
+        }
+
+        // Inicializar elementos del formulario si no están inicializados
+        if (!this.ausenciaForm) {
+            this.ausenciaForm = document.getElementById('ausenciaForm');
+            this.ausenciaModalLabel = document.getElementById('ausenciaModalLabel');
+            this.ausenciaError = document.getElementById('ausenciaError');
+            this.ausenciaSubmitBtn = document.getElementById('ausenciaSubmitBtn');
+            this.ausenciaArchivoActual = document.getElementById('ausenciaArchivoActual');
+            this.ausenciaSelect = document.getElementById('ausencia_asistencia');
+            this.ausenciaFecha = document.getElementById('ausencia_fecha');
+            this.ausenciaJustificacion = document.getElementById('ausencia_justificacion');
+            this.ausenciaEstado = document.getElementById('ausencia_estado');
+            this.ausenciaDocenteId = document.getElementById('ausencia_docente_id');
+            this.ausenciaDocenteDisplay = document.getElementById('ausencia_docente_display');
+            this.ausenciaIdInput = document.getElementById('ausencia_id');
+
+            if (this.ausenciaForm) {
+                this.ausenciaForm.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    this.submitAusenciaForm();
+                });
+            }
+
+            if (this.ausenciaSelect) {
+                this.ausenciaSelect.addEventListener('change', () => this.handleAusenciaAsistenciaChange(this.ausenciaSelect));
+            }
+        }
+
+        if (!this.ausenciaForm) {
+            console.error('Formulario de ausencia no encontrado');
+            return;
+        }
+
+        const isEdit = data && data.id;
+        this.resetAusenciaForm();
+
+        if (this.ausenciaModalLabel) {
+            const icon = isEdit ? 'bi-pencil' : 'bi-plus-circle';
+            const title = isEdit ? 'Editar justificación' : 'Registrar justificación';
+            this.ausenciaModalLabel.innerHTML = `<i class="bi ${icon} me-2"></i>${title}`;
+        }
+
+        console.log('Mostrando modal...');
+        this.ausenciaModal.show();
+        console.log('Modal mostrado');
+
+        if (isEdit) {
+            this.ausenciaForm.setAttribute('action', `/ausencias/update/${data.id}`);
+            if (this.ausenciaIdInput) {
+                this.ausenciaIdInput.value = data.id;
+            }
+
+            if (this.ausenciaFecha && data.fecha) {
+                this.ausenciaFecha.value = data.fecha;
+            }
+
+            if (this.ausenciaJustificacion && typeof data.justificacion !== 'undefined') {
+                this.ausenciaJustificacion.value = this.decodeHtml(data.justificacion);
+            }
+
+            if (this.ausenciaEstado && data.estado) {
+                this.ausenciaEstado.value = data.estado;
+            }
+
+            if (this.ausenciaDocenteId && data.docenteId) {
+                this.ausenciaDocenteId.value = data.docenteId;
+            }
+            if (this.ausenciaDocenteDisplay && data.docenteNombre) {
+                this.ausenciaDocenteDisplay.value = this.decodeHtml(data.docenteNombre);
+            }
+
+            if (this.ausenciaSelect) {
+                const asistenciaId = data.asistenciaId || '';
+                if (asistenciaId) {
+                    let option = this.ausenciaSelect.querySelector(`option[value="${asistenciaId}"]`);
+                    if (!option) {
+                        option = document.createElement('option');
+                        option.value = asistenciaId;
+                        option.dataset.temp = 'true';
+                        option.dataset.docenteId = data.docenteId || '';
+                        option.dataset.docenteNombre = data.docenteNombre || '';
+                        option.dataset.fecha = data.fecha || '';
+                        option.textContent = `Registro asociado (${data.fecha ? new Date(data.fecha).toLocaleDateString() : 'Asignado'})`;
+                        this.ausenciaSelect.insertBefore(option, this.ausenciaSelect.firstChild);
+                    }
+                    this.ausenciaSelect.value = asistenciaId;
+                }
+            }
+
+            if (this.ausenciaArchivoActual && data.archivo) {
+                this.ausenciaArchivoActual.innerHTML = `Archivo actual: <a href="/ausencias/download/${data.id}" target="_blank" rel="noopener">Descargar soporte</a>`;
+                this.ausenciaArchivoActual.classList.remove('d-none');
+            }
+        } else {
+            this.ausenciaForm.setAttribute('action', '/ausencias/store');
+        }
+    },
+
+    handleAusenciaAsistenciaChange(select) {
+        if (!select) return;
+        const option = select.options[select.selectedIndex];
+        if (!option) {
+            return;
+        }
+
+        const fecha = option.dataset.fecha || '';
+        const docenteId = option.dataset.docenteId || '';
+        const docenteNombre = option.dataset.docenteNombre || '';
+
+        if (this.ausenciaFecha && fecha) {
+            this.ausenciaFecha.value = fecha;
+        }
+
+        if (this.ausenciaDocenteId && docenteId) {
+            this.ausenciaDocenteId.value = docenteId;
+        }
+
+        if (this.ausenciaDocenteDisplay && docenteNombre) {
+            this.ausenciaDocenteDisplay.value = this.decodeHtml(docenteNombre);
+        }
+    },
+
+    async submitAusenciaForm() {
+        if (!this.ausenciaForm) {
+            return;
+        }
+
+        // Validación básica del formulario
+        if (!this.ausenciaForm.checkValidity()) {
+            this.ausenciaForm.reportValidity();
+            return;
+        }
+
+        const action = this.ausenciaForm.getAttribute('action');
+        const formData = new FormData(this.ausenciaForm);
+        const submitBtn = this.ausenciaSubmitBtn;
+
+        this.clearAusenciaErrors();
+
+        // Validar que haya fecha o asistencia_id
+        const asistenciaId = formData.get('asistencia_id');
+        const fecha = formData.get('fecha');
+        
+        if (!asistenciaId && !fecha) {
+            this.showAusenciaError('Debes seleccionar un registro de asistencia o especificar una fecha.');
+            if (this.ausenciaFecha) {
+                this.showFieldError(this.ausenciaFecha, 'Este campo es obligatorio si no seleccionas un registro');
+            }
+            return;
+        }
+
+        // Validar que haya justificación
+        const justificacion = formData.get('justificacion');
+        if (!justificacion || justificacion.trim() === '') {
+            this.showAusenciaError('La justificación es obligatoria.');
+            if (this.ausenciaJustificacion) {
+                this.showFieldError(this.ausenciaJustificacion, 'Este campo es obligatorio');
+            }
+            return;
+        }
+
+        if (submitBtn) {
+            this.showLoading(submitBtn);
+        }
+
+        try {
+            const response = await fetch(action, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (submitBtn) {
+                this.hideLoading(submitBtn);
+            }
+
+            if (result.success) {
+                this.showNotification(result.message || 'Ausencia guardada correctamente', 'success');
+                this.ausenciaModal.hide();
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                this.showAusenciaError(result.message || 'No se pudo guardar la ausencia');
+                if (result.errors) {
+                    Object.entries(result.errors).forEach(([field, message]) => {
+                        const input = this.ausenciaForm.querySelector(`[name="${field}"]`);
+                        if (input) {
+                            this.showFieldError(input, message);
+                        }
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error guardando ausencia:', error);
+            if (submitBtn) {
+                this.hideLoading(submitBtn);
+            }
+            this.showAusenciaError('Ocurrió un error al guardar la ausencia. Intenta nuevamente.');
+        }
+    },
+
+    openDeleteAusenciaModal(ausenciaId) {
+        // Inicializar modal si no está inicializado
+        const deleteModalEl = document.getElementById('deleteAusenciaModal');
+        if (!deleteModalEl) {
+            console.error('Modal de eliminación no encontrado');
+            return;
+        }
+
+        if (!this.ausenciaDeleteModal) {
+            this.ausenciaDeleteModal = bootstrap.Modal.getOrCreateInstance(deleteModalEl);
+        }
+
+        if (!this.ausenciaDeleteForm) {
+            this.ausenciaDeleteForm = document.getElementById('ausenciaDeleteForm');
+            this.ausenciaDeleteBtn = document.getElementById('ausenciaDeleteBtn');
+            this.ausenciaDeleteIdInput = document.getElementById('ausencia_delete_id');
+
+            if (this.ausenciaDeleteForm) {
+                this.ausenciaDeleteForm.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    this.submitAusenciaDelete();
+                });
+            }
+        }
+
+        if (!this.ausenciaDeleteForm) {
+            console.error('Formulario de eliminación no encontrado');
+            return;
+        }
+
+        this.ausenciaDeleteForm.setAttribute('action', `/ausencias/delete/${ausenciaId}`);
+        if (this.ausenciaDeleteIdInput) {
+            this.ausenciaDeleteIdInput.value = ausenciaId;
+        }
+        this.ausenciaDeleteModal.show();
+    },
+
+    async submitAusenciaDelete() {
+        if (!this.ausenciaDeleteForm) {
+            return;
+        }
+
+        const action = this.ausenciaDeleteForm.getAttribute('action');
+        const formData = new FormData(this.ausenciaDeleteForm);
+        const deleteBtn = this.ausenciaDeleteBtn;
+
+        try {
+            const response = await fetch(action, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (deleteBtn) {
+                this.hideLoading(deleteBtn);
+            }
+
+            if (result.success) {
+                this.showNotification(result.message || 'Ausencia eliminada correctamente', 'success');
+                this.ausenciaDeleteModal.hide();
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                this.showNotification(result.message || 'No se pudo eliminar la ausencia', 'error');
+            }
+        } catch (error) {
+            console.error('Error eliminando ausencia:', error);
+            if (deleteBtn) {
+                this.hideLoading(deleteBtn);
+            }
+            this.showNotification('Ocurrió un error al eliminar la ausencia.', 'error');
+        }
+    },
+
+    showAusenciaError(message) {
+        if (!this.ausenciaError) {
+            return;
+        }
+        this.ausenciaError.textContent = message;
+        this.ausenciaError.classList.remove('d-none');
+    },
+
+    clearAusenciaErrors() {
+        if (this.ausenciaError) {
+            this.ausenciaError.classList.add('d-none');
+            this.ausenciaError.textContent = '';
+        }
+    },
     
     // Inicializar gráficos
     initCharts() {
@@ -360,16 +778,32 @@ const App = {
 
 // Funciones específicas del Dashboard
 function loadCharts() {
-    loadAsistenciaChart();
-    loadHorariosChart();
+    console.log('Iniciando carga de gráficos...');
+    console.log('Canvas asistenciaChart:', document.getElementById('asistenciaChart'));
+    console.log('Canvas asistenciaBarrasChart:', document.getElementById('asistenciaBarrasChart'));
+    console.log('Canvas horariosChart:', document.getElementById('horariosChart'));
+    
+    if (document.getElementById('asistenciaChart')) {
+        loadAsistenciaChart();
+    }
+    if (document.getElementById('asistenciaBarrasChart')) {
+        loadAsistenciaBarrasChart();
+    }
+    if (document.getElementById('horariosChart')) {
+        loadHorariosChart();
+    }
 }
 
 let asistenciaChart = null;
+let asistenciaBarrasChart = null;
 let horariosChart = null;
 
 function loadAsistenciaChart() {
     const ctx = document.getElementById('asistenciaChart');
-    if (!ctx) return;
+    if (!ctx) {
+        console.log('Canvas asistenciaChart no encontrado');
+        return;
+    }
     
     // Destruir gráfico anterior si existe
     if (asistenciaChart) {
@@ -378,9 +812,15 @@ function loadAsistenciaChart() {
     }
     
     fetch('/dashboard/chart-data?type=asistencia_mensual')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error al cargar datos: ' + response.status);
+            }
+            return response.json();
+        })
         .then(data => {
             console.log('Datos de asistencia recibidos:', data);
+            console.log('Resumen completo:', JSON.stringify(data.resumen, null, 2));
             
             // Preparar datasets según el tipo de datos
             let datasets = [];
@@ -403,52 +843,367 @@ function loadAsistenciaChart() {
                         tension: 0.1
                     }
                 ];
-            } else {
-                // Datos simples (docente view)
+            } else if (data.datasets && (data.datasets.total || data.datasets.presentes)) {
+                // Datos con estructura datasets pero puede tener solo uno
                 datasets = [{
                     label: 'Mis Asistencias',
-                    data: data.datasets?.total || data.data || [],
-                    borderColor: App.config.chartColors.primary,
-                    backgroundColor: App.config.chartColors.primary + '20',
+                    data: data.datasets.total || data.datasets.presentes || [],
+                    borderColor: App.config.chartColors?.primary || 'rgb(54, 162, 235)',
+                    backgroundColor: (App.config.chartColors?.primary || 'rgb(54, 162, 235)') + '20',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }];
+            } else {
+                // Datos simples (docente view) - fallback
+                datasets = [{
+                    label: 'Mis Asistencias',
+                    data: data.data || [],
+                    borderColor: App.config.chartColors?.primary || 'rgb(54, 162, 235)',
+                    backgroundColor: (App.config.chartColors?.primary || 'rgb(54, 162, 235)') + '20',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4
                 }];
             }
             
-            asistenciaChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.labels || [],
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: datasets.length > 1
-                        }
+            // Asegurar que hay labels y datos
+            let labels = data.labels || [];
+            if (labels.length === 0 && datasets[0] && datasets[0].data.length > 0) {
+                // Si hay datos pero no labels, crear labels genéricos
+                for (let i = 0; i < datasets[0].data.length; i++) {
+                    labels.push('Día ' + (i + 1));
+                }
+            }
+            
+            // Si no hay datos, mostrar un mensaje o gráfico vacío
+            if (labels.length === 0 || (datasets[0] && datasets[0].data.length === 0)) {
+                labels = ['No hay datos'];
+                datasets = [{
+                    label: 'Sin asistencias',
+                    data: [0],
+                    borderColor: 'rgb(200, 200, 200)',
+                    backgroundColor: 'rgba(200, 200, 200, 0.2)',
+                    borderWidth: 2,
+                    fill: true
+                }];
+            }
+            
+            console.log('Creando gráfico de línea con labels:', labels, 'datasets:', datasets);
+            console.log('Chart disponible:', typeof Chart !== 'undefined');
+            console.log('Context del canvas:', ctx);
+            console.log('Ancho del canvas:', ctx.width, 'Alto del canvas:', ctx.height);
+            
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js no está disponible');
+                if (ctx && ctx.parentElement) {
+                    ctx.parentElement.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-exclamation-triangle me-2"></i>Chart.js no está disponible</div>';
+                }
+                return;
+            }
+            
+            // Asegurar que el canvas tenga dimensiones
+            if (!ctx.width || !ctx.height) {
+                console.warn('Canvas sin dimensiones, estableciendo valores por defecto');
+                ctx.width = ctx.parentElement ? ctx.parentElement.clientWidth : 400;
+                ctx.height = 250;
+            }
+            
+            try {
+                // Destruir gráfico anterior si existe
+                if (asistenciaChart) {
+                    asistenciaChart.destroy();
+                    asistenciaChart = null;
+                }
+                
+                asistenciaChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0,0,0,0.1)'
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000
+                        },
+                        plugins: {
+                            legend: {
+                                display: datasets.length > 1
                             }
                         },
-                        x: {
-                            grid: {
-                                display: false
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
                             }
                         }
                     }
+                });
+                console.log('Gráfico de asistencia cargado correctamente');
+                console.log('Gráfico creado:', asistenciaChart);
+            } catch (error) {
+                console.error('Error al crear el gráfico de línea:', error);
+                console.error('Stack trace:', error.stack);
+                if (ctx && ctx.parentElement) {
+                    ctx.parentElement.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-exclamation-triangle me-2"></i>Error al crear el gráfico: ' + error.message + '</div>';
                 }
-            });
-            console.log('Gráfico de asistencia cargado correctamente');
+            }
         })
         .catch(error => {
             console.error('Error loading chart:', error);
+            // Crear gráfico con datos vacíos en caso de error
+            const labels = ['No hay datos'];
+            const datasets = [{
+                label: 'Sin asistencias',
+                data: [0],
+                borderColor: 'rgb(200, 200, 200)',
+                backgroundColor: 'rgba(200, 200, 200, 0.2)',
+                borderWidth: 2,
+                fill: true
+            }];
+            
+            try {
+                asistenciaChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            } catch (chartError) {
+                console.error('Error al crear gráfico de línea con datos vacíos:', chartError);
+                if (ctx && ctx.parentElement) {
+                    ctx.parentElement.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-exclamation-triangle me-2"></i>No se pudieron cargar los datos de asistencia</div>';
+                }
+            }
+        });
+}
+
+function loadAsistenciaBarrasChart() {
+    const ctx = document.getElementById('asistenciaBarrasChart');
+    if (!ctx) {
+        console.log('Canvas asistenciaBarrasChart no encontrado');
+        return;
+    }
+    
+    // Destruir gráfico anterior si existe
+    if (asistenciaBarrasChart) {
+        asistenciaBarrasChart.destroy();
+        asistenciaBarrasChart = null;
+    }
+    
+    fetch('/dashboard/chart-data?type=asistencia_mensual')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error al cargar datos: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Datos para gráfico de barras:', data);
+            
+            // Preparar datos para el gráfico de barras
+            const resumen = data.resumen || {};
+            const porcentajes = resumen.porcentajes || {
+                presente: 0,
+                tardanza: 0,
+                asistido_tarde: 0,
+                incumplido: 0
+            };
+            
+            const labels = ['Presentes', 'Tardanzas', 'Asistido Tarde', 'Incumplidos'];
+            const datos = [
+                parseFloat(porcentajes.presente) || 0,
+                parseFloat(porcentajes.tardanza) || 0,
+                parseFloat(porcentajes.asistido_tarde) || 0,
+                parseFloat(porcentajes.incumplido) || 0
+            ];
+            
+            const colores = [
+                'rgba(40, 167, 69, 0.8)',    // Verde para Presentes
+                'rgba(255, 193, 7, 0.8)',     // Amarillo para Tardanzas
+                'rgba(255, 152, 0, 0.8)',     // Naranja para Asistido Tarde
+                'rgba(220, 53, 69, 0.8)'      // Rojo para Incumplidos
+            ];
+            
+            const coloresBorde = [
+                'rgba(40, 167, 69, 1)',
+                'rgba(255, 193, 7, 1)',
+                'rgba(255, 152, 0, 1)',
+                'rgba(220, 53, 69, 1)'
+            ];
+            
+            console.log('Creando gráfico de barras con datos:', datos);
+            console.log('Chart disponible:', typeof Chart !== 'undefined');
+            console.log('Context del canvas:', ctx);
+            console.log('Ancho del canvas:', ctx.width, 'Alto del canvas:', ctx.height);
+            
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js no está disponible');
+                if (ctx && ctx.parentElement) {
+                    ctx.parentElement.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-exclamation-triangle me-2"></i>Chart.js no está disponible</div>';
+                }
+                return;
+            }
+            
+            // Asegurar que el canvas tenga dimensiones
+            if (!ctx.width || !ctx.height) {
+                console.warn('Canvas sin dimensiones, estableciendo valores por defecto');
+                ctx.width = ctx.parentElement ? ctx.parentElement.clientWidth : 400;
+                ctx.height = 250;
+            }
+            
+            try {
+                // Destruir gráfico anterior si existe
+                if (asistenciaBarrasChart) {
+                    asistenciaBarrasChart.destroy();
+                    asistenciaBarrasChart = null;
+                }
+                
+                asistenciaBarrasChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Porcentaje (%)',
+                            data: datos,
+                            backgroundColor: colores,
+                            borderColor: coloresBorde,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed.y || 0;
+                                        const total = resumen.total || 0;
+                                        const cantidad = Math.round((value / 100) * total);
+                                        return label + ': ' + value.toFixed(1) + '% (' + cantidad + ' de ' + total + ')';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0,0,0,0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('Gráfico de barras de asistencia cargado correctamente');
+                console.log('Gráfico creado:', asistenciaBarrasChart);
+            } catch (error) {
+                console.error('Error al crear el gráfico de barras:', error);
+                console.error('Stack trace:', error.stack);
+                if (ctx && ctx.parentElement) {
+                    ctx.parentElement.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-exclamation-triangle me-2"></i>Error al crear el gráfico: ' + error.message + '</div>';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading bar chart:', error);
+            // Crear gráfico con datos vacíos en caso de error
+            const labels = ['Presentes', 'Tardanzas', 'Asistido Tarde', 'Incumplidos'];
+            const datos = [0, 0, 0, 0];
+            
+            try {
+                asistenciaBarrasChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Porcentaje (%)',
+                            data: datos,
+                            backgroundColor: [
+                                'rgba(40, 167, 69, 0.8)',
+                                'rgba(255, 193, 7, 0.8)',
+                                'rgba(255, 152, 0, 0.8)',
+                                'rgba(220, 53, 69, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(40, 167, 69, 1)',
+                                'rgba(255, 193, 7, 1)',
+                                'rgba(255, 152, 0, 1)',
+                                'rgba(220, 53, 69, 1)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (chartError) {
+                console.error('Error al crear gráfico de barras con datos vacíos:', chartError);
+                if (ctx && ctx.parentElement) {
+                    ctx.parentElement.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-exclamation-triangle me-2"></i>No se pudieron cargar los datos de asistencia</div>';
+                }
+            }
         });
 }
 
@@ -567,6 +1322,7 @@ function refreshChart(chartType) {
     
     if (chartType === 'asistencia_mensual') {
         loadAsistenciaChart();
+        loadAsistenciaBarrasChart();
     }
 }
 
@@ -585,13 +1341,44 @@ function exportActivities() {
     // Implementar exportación de actividades
 }
 
+// Verificar que Chart.js esté disponible
+function waitForChartJS(callback, maxAttempts = 50) {
+    let attempts = 0;
+    const checkChart = setInterval(function() {
+        attempts++;
+        if (typeof Chart !== 'undefined') {
+            clearInterval(checkChart);
+            console.log('Chart.js cargado correctamente');
+            callback();
+        } else if (attempts >= maxAttempts) {
+            clearInterval(checkChart);
+            console.error('Chart.js no se pudo cargar después de ' + maxAttempts + ' intentos');
+        }
+    }, 100);
+}
+
 // Inicializar aplicación cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
     App.init();
     
+    // Inicializar ausencias después de que todo esté cargado
+    setTimeout(function() {
+        if (typeof App.initAusencias === 'function') {
+            App.initAusencias();
+        }
+    }, 100);
+    
     // Cargar componentes específicos del dashboard
-    if (document.getElementById('asistenciaChart')) {
-        loadCharts();
-        loadRecentActivities();
+    if (document.getElementById('asistenciaChart') || document.getElementById('asistenciaBarrasChart')) {
+        waitForChartJS(function() {
+            // Esperar un poco más para asegurar que todo esté listo
+            setTimeout(function() {
+                console.log('Ejecutando loadCharts después de esperar Chart.js...');
+                loadCharts();
+                if (typeof loadRecentActivities === 'function') {
+                    loadRecentActivities();
+                }
+            }, 200);
+        });
     }
 });
