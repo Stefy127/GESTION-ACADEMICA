@@ -79,15 +79,46 @@ class AusenciasController extends Controller
         // Si no hay archivo, $archivo será null, lo cual está permitido
 
         try {
-            $sql = "INSERT INTO ausencias_docente (docente_id, asistencia_id, fecha, justificacion, archivo_soporte, estado, creado_por, actualizado_por)
-                    VALUES (:docente_id, :asistencia_id, :fecha, :justificacion, :archivo_soporte, :estado, :creado_por, :actualizado_por)";
+            // Evitar inserciones duplicadas en caso de doble envío rápido desde el cliente
+            // Buscamos un registro muy reciente con los mismos datos clave
+            $dupCheckSql = "SELECT id, created_at FROM ausencias_docente
+                            WHERE docente_id = :docente_id
+                              AND (asistencia_id IS NOT DISTINCT FROM :asistencia_id)
+                              AND fecha = :fecha
+                              AND COALESCE(justificacion, '') = COALESCE(:justificacion, '')
+                            ORDER BY id DESC
+                            LIMIT 1";
+            $dupParams = [
+                ':docente_id' => $docenteId,
+                ':asistencia_id' => !empty($data['asistencia_id']) ? (int)$data['asistencia_id'] : null,
+                ':fecha' => $fecha,
+                ':justificacion' => $data['justificacion'] ?? null
+            ];
+            $dupResult = $this->db->query($dupCheckSql, $dupParams);
+            if (!empty($dupResult)) {
+                $last = $dupResult[0];
+                if (!empty($last['created_at'])) {
+                    $createdAt = new DateTime($last['created_at']);
+                    $now = new DateTime();
+                    $interval = $now->getTimestamp() - $createdAt->getTimestamp();
+                    // Si el registro fue creado hace menos de 10 segundos, lo consideramos duplicado
+                    if ($interval <= 10) {
+                        return $this->jsonResponse(['success' => true, 'message' => 'Solicitud recibida (posible duplicado detectado).']);
+                    }
+                }
+            }
+            // Insertar y almacenar archivo en la base de datos (si se subió)
+            $sql = "INSERT INTO ausencias_docente (docente_id, asistencia_id, fecha, justificacion, archivo_soporte_name, archivo_soporte_mime, archivo_soporte_base64, estado, creado_por, actualizado_por)
+                    VALUES (:docente_id, :asistencia_id, :fecha, :justificacion, :archivo_name, :archivo_mime, :archivo_base64, :estado, :creado_por, :actualizado_por)";
 
             $params = [
                 ':docente_id' => $docenteId,
                 ':asistencia_id' => !empty($data['asistencia_id']) ? (int)$data['asistencia_id'] : null,
                 ':fecha' => $fecha,
                 ':justificacion' => $data['justificacion'] ?? null,
-                ':archivo_soporte' => $archivo,
+                ':archivo_name' => $archivo['name'] ?? null,
+                ':archivo_mime' => $archivo['mime'] ?? null,
+                ':archivo_base64' => $archivo['base64'] ?? null,
                 ':estado' => $data['estado'],
                 ':creado_por' => $user['id'],
                 ':actualizado_por' => $user['id']
@@ -137,15 +168,18 @@ class AusenciasController extends Controller
             return $this->jsonResponse(['success' => false, 'message' => 'Datos inválidos', 'errors' => $errors]);
         }
 
-        $archivo = $this->procesarArchivoSoporte($_FILES['archivo_soporte'] ?? null, $ausencia['archivo_soporte']);
+        $archivo = $this->procesarArchivoSoporte($_FILES['archivo_soporte'] ?? null, $ausencia);
         if ($archivo === false) {
             return $this->jsonResponse(['success' => false, 'message' => 'El archivo de soporte no es válido. Se permiten PDF, PNG, JPG, JPEG.']);
         }
 
         try {
+            // Actualizar ausencia y, si llegó un nuevo archivo, actualizar los campos correspondientes
             $sql = "UPDATE ausencias_docente
                     SET justificacion = :justificacion,
-                        archivo_soporte = :archivo_soporte,
+                        archivo_soporte_name = :archivo_name,
+                        archivo_soporte_mime = :archivo_mime,
+                        archivo_soporte_base64 = :archivo_base64,
                         estado = :estado,
                         actualizado_por = :actualizado_por,
                         updated_at = CURRENT_TIMESTAMP
@@ -153,7 +187,9 @@ class AusenciasController extends Controller
 
             $params = [
                 ':justificacion' => $data['justificacion'] ?? null,
-                ':archivo_soporte' => $archivo,
+                ':archivo_name' => $archivo['name'] ?? $ausencia['archivo_soporte_name'] ?? null,
+                ':archivo_mime' => $archivo['mime'] ?? $ausencia['archivo_soporte_mime'] ?? null,
+                ':archivo_base64' => $archivo['base64'] ?? $ausencia['archivo_soporte_base64'] ?? null,
                 ':estado' => $data['estado'],
                 ':actualizado_por' => $user['id'],
                 ':id' => (int)$id
@@ -197,9 +233,8 @@ class AusenciasController extends Controller
             $sql = "DELETE FROM ausencias_docente WHERE id = :id";
             $this->db->query($sql, [':id' => (int)$id]);
 
-            if (!empty($ausencia['archivo_soporte'])) {
-                $this->eliminarArchivo($ausencia['archivo_soporte']);
-            }
+            // No hay archivo en FS cuando almacenamos en DB; si hubiera lógica adicional para limpiar
+            // recursos asociados se puede agregar aquí. Actualmente no es necesario.
 
             ActivityLogger::logDelete('ausencias_docente', $id, $ausencia);
 
@@ -215,7 +250,7 @@ class AusenciasController extends Controller
         $this->middleware->requireAuth();
         $ausencia = $this->getAusenciaById($id);
 
-        if (!$ausencia || empty($ausencia['archivo_soporte'])) {
+        if (!$ausencia || (empty($ausencia['archivo_soporte_name']) && empty($ausencia['archivo_soporte_base64']))) {
             http_response_code(404);
             echo 'Archivo no encontrado';
             exit;
@@ -228,21 +263,23 @@ class AusenciasController extends Controller
             exit;
         }
 
-        $ruta = __DIR__ . '/../../../uploads/ausencias/' . $ausencia['archivo_soporte'];
-        if (!file_exists($ruta)) {
+        // Leer archivo desde la base de datos (base64)
+        $mime = $ausencia['archivo_soporte_mime'] ?? 'application/octet-stream';
+        $nombre = $ausencia['archivo_soporte_name'] ?? ('ausencia_' . $ausencia['id']);
+        $base64 = $ausencia['archivo_soporte_base64'] ?? '';
+        if (empty($base64)) {
             http_response_code(404);
             echo 'Archivo no encontrado';
             exit;
         }
 
-        $mime = mime_content_type($ruta);
-        $nombre = basename($ruta);
+        $data = base64_decode($base64);
 
         header('Content-Description: File Transfer');
         header('Content-Type: ' . $mime);
         header('Content-Disposition: attachment; filename="' . $nombre . '"');
-        header('Content-Length: ' . filesize($ruta));
-        readfile($ruta);
+        header('Content-Length: ' . strlen($data));
+        echo $data;
         exit;
     }
 
@@ -370,8 +407,11 @@ class AusenciasController extends Controller
 
     private function procesarArchivoSoporte($archivo, $archivoExistente = null)
     {
+        // Ahora almacenamos archivos en la base de datos como base64.
+        // Si no llega archivo, devolver null (o conservar existente si se pasa el arreglo de la ausencia)
         if (empty($archivo) || empty($archivo['name'])) {
-            return $archivoExistente;
+            // Cuando se pasa $archivoExistente (registro de ausencia), devolvemos null para indicar que no hay cambio
+            return null;
         }
 
         if ($archivo['error'] !== UPLOAD_ERR_OK) {
@@ -384,32 +424,28 @@ class AusenciasController extends Controller
             return false;
         }
 
-        $extension = pathinfo($archivo['name'], PATHINFO_EXTENSION);
-        $nombre = uniqid('ausencia_') . '.' . strtolower($extension);
-        $directorio = __DIR__ . '/../../../uploads/ausencias/';
-
-        if (!is_dir($directorio)) {
-            mkdir($directorio, 0755, true);
-        }
-
-        $ruta = $directorio . $nombre;
-        if (!move_uploaded_file($archivo['tmp_name'], $ruta)) {
+        // Leer contenido y codificar en base64 para almacenamiento sencillo vía TEXT
+        $content = file_get_contents($archivo['tmp_name']);
+        if ($content === false) {
+            error_log('No se pudo leer el archivo temporal: ' . ($archivo['tmp_name'] ?? '')); 
             return false;
         }
 
-        if (!empty($archivoExistente)) {
-            $this->eliminarArchivo($archivoExistente);
-        }
+        $base64 = base64_encode($content);
+        $originalName = basename($archivo['name']);
 
-        return $nombre;
+        return [
+            'name' => $originalName,
+            'mime' => $mime,
+            'base64' => $base64
+        ];
     }
 
+    // Cuando los archivos se guardan en la BD no necesitamos eliminar archivos en disco.
     private function eliminarArchivo($archivo)
     {
-        $ruta = __DIR__ . '/../../../uploads/ausencias/' . $archivo;
-        if (file_exists($ruta)) {
-            @unlink($ruta);
-        }
+        // Método conservado por compatibilidad; no hace nada cuando se usa almacenamiento en BD.
+        return;
     }
 
     private function getAusenciaById($id)

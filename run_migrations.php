@@ -17,7 +17,8 @@ try {
         '002_create_docentes_info.sql',
         '003_add_hora_marcacion_to_asistencia_docente.sql',
         '004_add_password_changed_to_usuarios.sql',
-        '005_create_ausencias_docente.sql'
+    '005_create_ausencias_docente.sql',
+    '006_store_ausencias_files_in_db.sql'
     ];
     
     $migrationsDir = __DIR__ . '/database/migrations';

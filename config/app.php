@@ -8,7 +8,7 @@ return [
         'name' => 'Gestión Académica',
         'version' => '1.0.0',
         'debug' => true,
-        'timezone' => 'America/Mexico_City'
+        'timezone' => 'America/La_Paz'
     ],
     
     'database' => [

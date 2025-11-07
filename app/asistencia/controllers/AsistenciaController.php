@@ -9,9 +9,9 @@ class AsistenciaController extends Controller
         parent::__construct();
         $this->db = Database::getInstance();
         $this->middleware = new Middleware();
-        // Asegurar que la zona horaria esté configurada para Colombia
-        if (date_default_timezone_get() !== 'America/Bogota') {
-            date_default_timezone_set('America/Bogota');
+        // Asegurar que la zona horaria esté configurada para Bolivia
+        if (date_default_timezone_get() !== 'America/La_Paz') {
+            date_default_timezone_set('America/La_Paz');
         }
     }
     public function index()
@@ -118,8 +118,8 @@ class AsistenciaController extends Controller
         }
         
         // Verificar si está dentro de la ventana permitida o dentro del tiempo de clase
-        // Asegurar zona horaria de Colombia
-        $timezone = new DateTimeZone('America/Bogota');
+    // Asegurar zona horaria de Bolivia
+    $timezone = new DateTimeZone('America/La_Paz');
         $horaActual = new DateTime('now', $timezone);
         $fechaActual = $horaActual->format('Y-m-d');
         $diaActual = (int)$horaActual->format('N');
@@ -189,8 +189,8 @@ class AsistenciaController extends Controller
     private function registrarAsistencia($docente, $horario)
     {
         try {
-            // Asegurar zona horaria de Colombia
-            $timezone = new DateTimeZone('America/Bogota');
+            // Asegurar zona horaria de Bolivia
+            $timezone = new DateTimeZone('America/La_Paz');
             $horaMarcacion = new DateTime('now', $timezone);
             $fechaActual = $horaMarcacion->format('Y-m-d');
             $horaMarcacionTime = $horaMarcacion->format('H:i:s');
@@ -205,8 +205,8 @@ class AsistenciaController extends Controller
                 $horaFinStr .= ':00';
             }
             
-            // Crear DateTime con fecha actual y zona horaria de Colombia
-            $timezone = new DateTimeZone('America/Bogota');
+            // Crear DateTime con fecha actual y zona horaria de Bolivia
+            $timezone = new DateTimeZone('America/La_Paz');
             $horaProgramada = DateTime::createFromFormat('Y-m-d H:i:s', $fechaActual . ' ' . $horaInicioStr, $timezone);
             if (!$horaProgramada) {
                 $horaProgramada = DateTime::createFromFormat('Y-m-d H:i', $fechaActual . ' ' . substr($horaInicioStr, 0, 5), $timezone);
@@ -567,8 +567,8 @@ class AsistenciaController extends Controller
             
             $horarios = $this->db->query($sql, [':docente_id' => $user['id']]);
             
-            // Asegurar zona horaria de Colombia
-            $timezone = new DateTimeZone('America/Bogota');
+            // Asegurar zona horaria de Bolivia
+            $timezone = new DateTimeZone('America/La_Paz');
             $horaActual = new DateTime('now', $timezone);
             // date('N') retorna 1=Lunes, 7=Domingo, que coincide con nuestro esquema
             $diaActual = (int)$horaActual->format('N');
@@ -625,8 +625,8 @@ class AsistenciaController extends Controller
                 // Crear DateTime con fecha actual + hora del horario
                 $fechaActual = $horaActual->format('Y-m-d');
                 
-                // Crear DateTime con formato completo y zona horaria de Colombia
-                $timezone = new DateTimeZone('America/Bogota');
+                // Crear DateTime con formato completo y zona horaria de Bolivia
+                $timezone = new DateTimeZone('America/La_Paz');
                 $horaInicio = DateTime::createFromFormat('Y-m-d H:i:s', $fechaActual . ' ' . $horaInicioStr, $timezone);
                 $horaFin = DateTime::createFromFormat('Y-m-d H:i:s', $fechaActual . ' ' . $horaFinStr, $timezone);
                 
@@ -802,8 +802,8 @@ class AsistenciaController extends Controller
     private function registrarIncumplido($docenteId, $horario)
     {
         try {
-            // Asegurar zona horaria de Colombia
-            $timezone = new DateTimeZone('America/Bogota');
+            // Asegurar zona horaria de Bolivia
+            $timezone = new DateTimeZone('America/La_Paz');
             $horaActualObj = new DateTime('now', $timezone);
             $fechaActual = $horaActualObj->format('Y-m-d');
             $horaActual = $horaActualObj->format('Y-m-d H:i:s');
