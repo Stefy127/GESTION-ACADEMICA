@@ -3,38 +3,35 @@
  * Archivo principal de la aplicación
  */
 
+// Inicializar sesión ANTES de cualquier output o require
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.cookie_secure', isset($_SERVER['HTTPS']));
+    ini_set('session.use_strict_mode', 1);
+    session_start();
+}
+
 // Cargar configuración
 require_once __DIR__ . '/../config/app.php';
-
-// Cargar clases principales
-require_once __DIR__ . '/../app/models/Database.php';
-require_once __DIR__ . '/../app/models/Model.php';
-require_once __DIR__ . '/../app/models/Auth.php';
-require_once __DIR__ . '/../app/models/Middleware.php';
-require_once __DIR__ . '/../app/views/View.php';
-require_once __DIR__ . '/../app/controllers/Controller.php';
-require_once __DIR__ . '/../app/helpers/ActivityLogger.php';
-require_once __DIR__ . '/../app/controllers/AuthController.php';
-require_once __DIR__ . '/../app/controllers/DashboardController.php';
-require_once __DIR__ . '/../app/controllers/BitacoraController.php';
-require_once __DIR__ . '/../app/controllers/HomeController.php';
-require_once __DIR__ . '/../app/controllers/UsuariosController.php';
-require_once __DIR__ . '/../app/controllers/DocentesController.php';
-require_once __DIR__ . '/../app/controllers/MateriasController.php';
-require_once __DIR__ . '/../app/controllers/GruposController.php';
-require_once __DIR__ . '/../app/controllers/AulasController.php';
-require_once __DIR__ . '/../app/controllers/HorariosController.php';
-require_once __DIR__ . '/../app/controllers/AsistenciaController.php';
-require_once __DIR__ . '/../app/controllers/ReportesController.php';
-require_once __DIR__ . '/../app/controllers/CargaMasivaController.php';
-require_once __DIR__ . '/../app/Router.php';
 
 // Configurar manejo de errores
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Configurar zona horaria
-date_default_timezone_set('America/Mexico_City');
+date_default_timezone_set('America/Bogota'); // Colombia UTC-5
+
+// Cargar clases core (infraestructura básica)
+require_once __DIR__ . '/../app/core/Database.php';
+require_once __DIR__ . '/../app/core/Model.php';
+require_once __DIR__ . '/../app/core/Middleware.php';
+require_once __DIR__ . '/../app/core/View.php';
+require_once __DIR__ . '/../app/core/Controller.php';
+require_once __DIR__ . '/../app/core/helpers/ActivityLogger.php';
+require_once __DIR__ . '/../app/core/Router.php';
+
+// Cargar modelos específicos
+require_once __DIR__ . '/../app/gestion_usuarios/models/Auth.php';
 
 // Crear instancia del router
 $router = new Router();
@@ -46,6 +43,7 @@ $router->get('/about', 'Home@about');
 // Rutas de autenticación
 $router->get('/login', 'Auth@login');
 $router->post('/auth/login', 'Auth@processLogin');
+$router->post('/auth/change-password', 'Auth@changePassword');
 $router->get('/logout', 'Auth@logout');
 $router->get('/forgot-password', 'Auth@forgotPassword');
 $router->post('/auth/forgot-password', 'Auth@processForgotPassword');
@@ -58,6 +56,7 @@ $router->get('/dashboard/chart-data', 'Dashboard@getChartData');
 
 // Rutas de bitácora
 $router->get('/bitacora', 'Bitacora@index');
+$router->get('/bitacora/exportar', 'Bitacora@exportar');
 
 // Rutas de gestión de usuarios
 $router->get('/usuarios', 'Usuarios@index');
@@ -80,6 +79,7 @@ $router->post('/materias/store', 'Materias@store');
 $router->get('/materias/edit/{id}', 'Materias@edit');
 $router->post('/materias/update/{id}', 'Materias@update');
 $router->post('/materias/delete/{id}', 'Materias@delete');
+$router->get('/materias/grupos/{id}', 'Materias@grupos');
 
 // Rutas de gestión de grupos
 $router->get('/grupos', 'Grupos@index');
@@ -88,6 +88,7 @@ $router->post('/grupos/store', 'Grupos@store');
 $router->get('/grupos/edit/{id}', 'Grupos@edit');
 $router->post('/grupos/update/{id}', 'Grupos@update');
 $router->post('/grupos/delete/{id}', 'Grupos@delete');
+$router->get('/grupos/horarios/{id}', 'Grupos@horarios');
 
 // Rutas de gestión de aulas
 $router->get('/aulas', 'Aulas@index');
@@ -112,14 +113,28 @@ $router->get('/asistencia/registrar', 'Asistencia@registrar');
 $router->post('/asistencia/registrar', 'Asistencia@processRegistro');
 $router->get('/asistencia/reportes', 'Asistencia@reportes');
 
+// Rutas de ausencias
+$router->post('/ausencias/store', 'Ausencias@store');
+$router->post('/ausencias/update/{id}', 'Ausencias@update');
+$router->post('/ausencias/delete/{id}', 'Ausencias@delete');
+$router->get('/ausencias/download/{id}', 'Ausencias@download');
+
 // Rutas de reportes
 $router->get('/reportes', 'Reportes@index');
 $router->get('/reportes/asistencia', 'Reportes@asistencia');
 $router->get('/reportes/horarios', 'Reportes@horarios');
+$router->get('/reportes/docentes', 'Reportes@docentes');
+$router->get('/reportes/aulas', 'Reportes@aulas');
+$router->get('/reportes/exportar/asistencia', 'Reportes@exportarAsistencia');
+$router->get('/reportes/exportar/horarios', 'Reportes@exportarHorarios');
+$router->get('/reportes/exportar/docentes', 'Reportes@exportarDocentes');
+$router->get('/reportes/exportar/aulas', 'Reportes@exportarAulas');
 
 // Rutas de carga masiva
 $router->get('/carga-masiva', 'CargaMasiva@index');
-$router->get('/carga-masiva/procesar', 'CargaMasiva@procesar');
+$router->get('/carga-masiva/plantilla/{tipo}', 'CargaMasiva@descargarPlantilla');
+$router->get('/carga-masiva/plantilla/{tipo}/{formato}', 'CargaMasiva@descargarPlantilla');
+$router->post('/carga-masiva/procesar', 'CargaMasiva@procesar');
 
 // Ejecutar el router
 $router->run();

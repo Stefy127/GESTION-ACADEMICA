@@ -45,6 +45,16 @@ db: ## Conectar a PostgreSQL
 	@echo "🗄️ Conectando a PostgreSQL..."
 	@docker-compose exec postgres psql -U gestion_user -d gestion_academica
 
+migrate: ## Ejecutar todas las migraciones pendientes
+	@echo "🔄 Ejecutando migraciones..."
+	@docker-compose exec php php run_migrations.php
+	@echo "✅ Migraciones completadas"
+
+migrate-password: ## Ejecutar migración de password_changed (deprecated, usar 'make migrate')
+	@echo "🔄 Ejecutando migración de password_changed..."
+	@docker-compose exec php php add_password_changed_column.php
+	@echo "✅ Migración completada"
+
 status: ## Ver estado de servicios
 	@echo "📊 Estado de los servicios:"
 	@docker-compose ps

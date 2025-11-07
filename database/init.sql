@@ -107,6 +107,25 @@ CREATE TABLE IF NOT EXISTS asistencia_docente (
     UNIQUE(docente_id, horario_id, fecha)
 );
 
+-- Tabla de ausencias justificadas de docentes
+CREATE TABLE IF NOT EXISTS ausencias_docente (
+    id SERIAL PRIMARY KEY,
+    docente_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    asistencia_id INTEGER REFERENCES asistencia_docente(id) ON DELETE SET NULL,
+    fecha DATE NOT NULL,
+    justificacion TEXT,
+    archivo_soporte VARCHAR(255),
+    estado VARCHAR(20) DEFAULT 'pendiente',
+    creado_por INTEGER REFERENCES usuarios(id),
+    actualizado_por INTEGER REFERENCES usuarios(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_ausencias_docente_docente ON ausencias_docente(docente_id);
+CREATE INDEX IF NOT EXISTS idx_ausencias_docente_fecha ON ausencias_docente(fecha);
+CREATE INDEX IF NOT EXISTS idx_ausencias_docente_asistencia ON ausencias_docente(asistencia_id);
+
 -- Tabla de logs de actividad
 CREATE TABLE IF NOT EXISTS logs_actividad (
     id SERIAL PRIMARY KEY,
