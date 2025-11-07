@@ -107,6 +107,16 @@ class Auth
                 $needsPasswordChange = true;
             }
         }
+
+        // Si no se detectó por el campo password_changed, intentar detectar
+        // primer inicio de sesión (ultimo_acceso vacío) para forzar el cambio
+        // de contraseña en docentes. Esto ayuda cuando la columna password_changed
+        // fue influenciada por una migración previa.
+        if (!$needsPasswordChange && ($user['rol_nombre'] ?? '') === 'docente') {
+            if (empty($user['ultimo_acceso'])) {
+                $needsPasswordChange = true;
+            }
+        }
         
         return [
             'success' => true,
@@ -179,6 +189,13 @@ class Auth
             if (!$passwordChanged) {
                 $needsPasswordChange = true;
             }
+        }
+
+        // Respetar una bandera temporal en sesión (establecida en el proceso de login)
+        // Esto permite forzar el modal en el primer inicio de sesión aunque la columna
+        // en la base de datos esté en un estado inesperado debido a migraciones.
+        if (!empty($_SESSION['force_needs_password_change'])) {
+            $needsPasswordChange = true;
         }
         
         return [
@@ -389,6 +406,12 @@ class Auth
         
         // Registrar actividad
         $this->logActivity($userId, 'change_password', 'usuarios', $userId);
+
+        // Si existía la bandera temporal en la sesión, eliminarla ahora que la
+        // contraseña fue cambiada correctamente.
+        if (!empty($_SESSION['force_needs_password_change'])) {
+            unset($_SESSION['force_needs_password_change']);
+        }
         
         return ['success' => true, 'message' => 'Contraseña cambiada exitosamente'];
     }

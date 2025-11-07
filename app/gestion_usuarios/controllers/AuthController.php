@@ -72,6 +72,10 @@ class AuthController extends Controller
             // Si necesita cambiar contraseña, agregar flag
             if (isset($result['needs_password_change']) && $result['needs_password_change']) {
                 $response['needs_password_change'] = true;
+                // Persistir una bandera temporal en la sesión para forzar el modal
+                // Esto ayuda cuando la columna en la base de datos no refleja correctamente
+                // el estado en el primer login (por ejemplo, migraciones previas).
+                $_SESSION['force_needs_password_change'] = true;
             }
             
             return $this->jsonResponse($response);
