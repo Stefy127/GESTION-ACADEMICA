@@ -13,13 +13,18 @@
     <!-- Navbar Moderno -->
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/">
-                <i class="bi bi-mortarboard-fill"></i>
-                <span>Gestión Académica</span>
-            </a>
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <i class="bi bi-list fs-4"></i>
-            </button>
+            <div class="d-flex align-items-center gap-2 flex-nowrap">
+                <!-- Brand -->
+                <a class="navbar-brand d-flex align-items-center mb-0" href="/">
+                    <i class="bi bi-mortarboard-fill me-2"></i>
+                    <span>Gestión Académica</span>
+                </a>
+
+                <!-- Sidebar toggle for small screens (kept inline with brand) -->
+                <button id="sidebarToggleBtn" class="btn btn-outline-secondary d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
+                    <i class="bi bi-list fs-4"></i>
+                </button>
+            </div>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <?php if (isset($user)): ?>
@@ -63,9 +68,10 @@
     <!-- Contenido principal -->
     <main class="container-fluid">
         <?php if (isset($user)): ?>
-            <!-- Sidebar -->
+            <!-- Sidebar (desktop) and offcanvas (mobile) -->
             <div class="row">
-                <div class="col-md-2 sidebar">
+                <!-- Desktop sidebar (visible md and up) -->
+                <div class="col-md-2 sidebar d-none d-md-block">
                     <div class="position-sticky pt-4">
                         <div class="px-3 mb-4">
                             <h6 class="text-uppercase text-muted fw-bold mb-3">Principal</h6>
@@ -186,6 +192,164 @@
                                 </li>
                             </ul>
                         <?php endif; ?>
+                        
+                        <!-- Sidebar collapse button (desktop) -->
+                        <div class="px-3 py-3 mt-4">
+                            <button id="sidebarCollapseBtn" class="btn btn-sm btn-outline-secondary w-100 sidebar-collapse-btn" type="button" title="Comprimir barra lateral">
+                                <i class="bi bi-chevron-left"></i>
+                                <span class="ms-2">Comprimir</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Offcanvas sidebar for small screens -->
+                <div class="offcanvas offcanvas-start d-md-none" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
+                    <div class="offcanvas-header">
+                        <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">Menú</h5>
+                        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                    </div>
+                    <div class="offcanvas-body">
+                        <!-- User profile quick links (mobile) -->
+                        <div class="d-flex align-items-center mb-3 px-3">
+                            <div class="avatar-sm me-2">
+                                <div class="avatar-initials bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                                    <?php echo strtoupper(substr($user['nombre'], 0, 1) . substr($user['apellido'], 0, 1)); ?>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold"><?php echo htmlspecialchars($user['nombre'] . ' ' . $user['apellido']); ?></div>
+                                <small class="text-muted"><?php echo ucfirst($user['rol']); ?></small>
+                            </div>
+                            <a class="btn btn-sm btn-outline-secondary ms-2" href="/profile"><i class="bi bi-person"></i></a>
+                        </div>
+
+                        <div class="px-3 mb-4">
+                            <h6 class="text-uppercase text-muted fw-bold mb-3">Principal</h6>
+                        </div>
+                        <ul class="nav flex-column mb-3">
+                            <li class="nav-item">
+                                <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/dashboard') !== false) ? 'active' : ''; ?>" href="/dashboard">
+                                    <i class="bi bi-speedometer2"></i>
+                                    <span>Dashboard</span>
+                                </a>
+                            </li>
+                        </ul>
+
+                        <?php if (in_array($user['rol'], ['administrador', 'coordinador'])): ?>
+                            <div class="px-3 mb-4 mt-4">
+                                <h6 class="text-uppercase text-muted fw-bold mb-3">Gestión</h6>
+                            </div>
+                            <ul class="nav flex-column">
+                                <li class="nav-item">
+                                    <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/usuarios') !== false) ? 'active' : ''; ?>" href="/usuarios">
+                                        <i class="bi bi-people"></i>
+                                        <span>Usuarios</span>
+                                    </a>
+                                </li>
+                                <?php if (in_array($user['rol'], ['administrador', 'coordinador'])): ?>
+                                <li class="nav-item">
+                                    <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/docentes') !== false) ? 'active' : ''; ?>" href="/docentes">
+                                        <i class="bi bi-person-badge"></i>
+                                        <span>Docentes</span>
+                                    </a>
+                                </li>
+                                <?php endif; ?>
+                                <li class="nav-item">
+                                    <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/materias') !== false) ? 'active' : ''; ?>" href="/materias">
+                                        <i class="bi bi-book"></i>
+                                        <span>Materias</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/grupos') !== false) ? 'active' : ''; ?>" href="/grupos">
+                                        <i class="bi bi-collection"></i>
+                                        <span>Grupos</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/aulas') !== false) ? 'active' : ''; ?>" href="/aulas">
+                                        <i class="bi bi-building"></i>
+                                        <span>Aulas</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/horarios') !== false) ? 'active' : ''; ?>" href="/horarios">
+                                        <i class="bi bi-calendar-week"></i>
+                                        <span>Horarios</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        <?php endif; ?>
+
+                        <div class="px-3 mb-4 mt-4">
+                            <h6 class="text-uppercase text-muted fw-bold mb-3">Actividades</h6>
+                        </div>
+                        <ul class="nav flex-column">
+                            <?php if ($user['rol'] === 'docente'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/asistencia/registrar') !== false) ? 'active' : ''; ?>" href="/asistencia/registrar">
+                                    <i class="bi bi-plus-circle"></i>
+                                    <span>Registrar Asistencia</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?php 
+                                    $isAsistenciaActive = (strpos($_SERVER['REQUEST_URI'], '/asistencia') !== false && strpos($_SERVER['REQUEST_URI'], '/asistencia/registrar') === false);
+                                    echo $isAsistenciaActive ? 'active' : ''; 
+                                ?>" href="/asistencia">
+                                    <i class="bi bi-list-check"></i>
+                                    <span>Mis Asistencias</span>
+                                </a>
+                            </li>
+                            <?php else: ?>
+                            <li class="nav-item">
+                                <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/asistencia') !== false) ? 'active' : ''; ?>" href="/asistencia">
+                                    <i class="bi bi-check-circle"></i>
+                                    <span>Asistencia</span>
+                                </a>
+                            </li>
+                            <?php endif; ?>
+                            
+                            <?php if (in_array($user['rol'], ['administrador', 'coordinador', 'autoridad'])): ?>
+                                <li class="nav-item">
+                                    <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/reportes') !== false) ? 'active' : ''; ?>" href="/reportes">
+                                        <i class="bi bi-graph-up"></i>
+                                        <span>Reportes</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                            
+                            <?php if ($user['rol'] === 'administrador'): ?>
+                                <li class="nav-item">
+                                    <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/bitacora') !== false) ? 'active' : ''; ?>" href="/bitacora">
+                                        <i class="bi bi-journal-text"></i>
+                                        <span>Bitácora</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                        </ul>
+
+                        <?php if ($user['rol'] === 'administrador'): ?>
+                            <div class="px-3 mb-4 mt-4">
+                                <h6 class="text-uppercase text-muted fw-bold mb-3">Administración</h6>
+                            </div>
+                            <ul class="nav flex-column">
+                                <li class="nav-item">
+                                    <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/carga-masiva') !== false) ? 'active' : ''; ?>" href="/carga-masiva">
+                                        <i class="bi bi-upload"></i>
+                                        <span>Carga Masiva</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        <?php endif; ?>
+                        <!-- Sidebar collapse button (mobile offcanvas) -->
+                        <div class="px-3 py-3 mt-3 border-top">
+                            <button id="sidebarCollapseBtnMobile" class="btn btn-sm btn-outline-secondary w-100 sidebar-collapse-btn" type="button" title="Comprimir barra lateral">
+                                <i class="bi bi-chevron-left"></i>
+                                <span class="ms-2">Comprimir</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -214,7 +378,7 @@
     <!-- Modal para cambio de contraseña obligatorio (solo para docentes en primer login) -->
     <?php if (isset($user) && isset($user['needs_password_change']) && $user['needs_password_change']): ?>
     <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
             <div class="modal-content">
                 <div class="modal-header bg-warning text-dark">
                     <h5 class="modal-title" id="changePasswordModalLabel">
@@ -280,6 +444,63 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/js/app.js"></script>
+    <script>
+    // Ensure offcanvas opens reliably when the toggle is clicked (avoids accidental dropdown opens)
+    document.addEventListener('DOMContentLoaded', function() {
+        var btn = document.getElementById('sidebarToggleBtn');
+        var offcanvasEl = document.getElementById('sidebarOffcanvas');
+        if (btn && offcanvasEl && typeof bootstrap !== 'undefined') {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                try {
+                    var oc = bootstrap.Offcanvas.getInstance(offcanvasEl) || new bootstrap.Offcanvas(offcanvasEl);
+                    oc.show();
+                } catch (err) {
+                    console.error('Error opening offcanvas:', err);
+                }
+            });
+        }
+    });
+    </script>
+    <script>
+    // Sidebar collapse toggle (desktop + mobile) with persistence
+    document.addEventListener('DOMContentLoaded', function() {
+        var collapseBtn = document.getElementById('sidebarCollapseBtn');
+        var collapseBtnMobile = document.getElementById('sidebarCollapseBtnMobile');
+        var body = document.body;
+        var offcanvasEl = document.getElementById('sidebarOffcanvas');
+
+        function applyCollapsedState(collapsed) {
+            if (collapsed) {
+                body.classList.add('sidebar-collapsed');
+                if (offcanvasEl) offcanvasEl.classList.add('sidebar-collapsed');
+            } else {
+                body.classList.remove('sidebar-collapsed');
+                if (offcanvasEl) offcanvasEl.classList.remove('sidebar-collapsed');
+            }
+        }
+
+        // initialize from localStorage
+        try {
+            var stored = localStorage.getItem('sidebarCollapsed');
+            if (stored !== null) {
+                applyCollapsedState(stored === 'true');
+            }
+        } catch (err) {
+            console.warn('Could not read sidebarCollapsed from localStorage', err);
+        }
+
+        function toggleCollapsed() {
+            var collapsed = body.classList.toggle('sidebar-collapsed');
+            if (offcanvasEl) offcanvasEl.classList.toggle('sidebar-collapsed');
+            try { localStorage.setItem('sidebarCollapsed', collapsed); } catch (err) { /* ignore */ }
+        }
+
+        if (collapseBtn) collapseBtn.addEventListener('click', function(e){ e.preventDefault(); toggleCollapsed(); });
+        if (collapseBtnMobile) collapseBtnMobile.addEventListener('click', function(e){ e.preventDefault(); toggleCollapsed(); });
+    });
+    </script>
     
     <?php if (isset($user) && isset($user['needs_password_change']) && $user['needs_password_change']): ?>
     <script>

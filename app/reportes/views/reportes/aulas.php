@@ -55,30 +55,6 @@
     </div>
 </div>
 
-<!-- Gráfico de Distribución -->
-<div class="row g-4 mb-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Distribución de Aulas</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="distribucionAulasChart" height="100"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Uso por Tipo</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="usoPorTipoChart" height="100"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Tabla Detallada -->
 <div class="card">
     <div class="card-header">

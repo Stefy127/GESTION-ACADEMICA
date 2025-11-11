@@ -14,6 +14,8 @@ class HorariosController extends Controller
 
     public function index()
     {
+        // Allow admins and coordinators to view all horarios.
+        // Also allow filtering by docente via GET param ?docente_id=123
         if (!Middleware::checkRole(['administrador', 'coordinador'])) {
             return $this->view->renderWithLayout('errors/403', ['title' => 'Acceso Denegado']);
         }
@@ -21,10 +23,15 @@ class HorariosController extends Controller
         // Registrar acceso al módulo
         ActivityLogger::logView('horarios', null);
 
+        $docenteId = intval($_GET['docente_id'] ?? 0);
+        $horarios = $this->getHorarios($docenteId ?: null);
+
         $data = [
-            'title' => 'Gestión de Horarios',
+            'title' => $docenteId ? 'Horarios del Docente' : 'Gestión de Horarios',
             'user' => $this->getCurrentUser(),
-            'horarios' => $this->getHorarios()
+            'horarios' => $horarios,
+            'filter_docente_id' => $docenteId,
+            'docente' => $docenteId ? $this->getDocente($docenteId) : null
         ];
 
         return $this->view->renderWithLayout('horarios/index', $data);
@@ -393,7 +400,7 @@ class HorariosController extends Controller
         return $conflicts;
     }
 
-    private function getHorarios()
+    private function getHorarios($docenteId = null)
     {
         try {
             $sql = "SELECT h.*, 
@@ -413,11 +420,30 @@ class HorariosController extends Controller
                     LEFT JOIN grupos g ON h.grupo_id = g.id
                     LEFT JOIN aulas a ON h.aula_id = a.id
                     LEFT JOIN usuarios u ON h.docente_id = u.id
-                    WHERE h.activo = true
-                    ORDER BY h.dia_semana, h.hora_inicio";
-            return $this->db->query($sql);
+                    WHERE h.activo = true";
+
+            $params = [];
+            if ($docenteId) {
+                $sql .= " AND h.docente_id = :docente_id";
+                $params[':docente_id'] = $docenteId;
+            }
+
+            $sql .= " ORDER BY h.dia_semana, h.hora_inicio";
+
+            return $this->db->query($sql, $params);
         } catch (Exception $e) {
             return [];
+        }
+    }
+
+    private function getDocente($id)
+    {
+        try {
+            $sql = "SELECT u.id, u.nombre, u.apellido, u.email, u.ci FROM usuarios u WHERE u.id = :id";
+            $result = $this->db->query($sql, [':id' => $id]);
+            return $result && count($result) ? $result[0] : null;
+        } catch (Exception $e) {
+            return null;
         }
     }
 

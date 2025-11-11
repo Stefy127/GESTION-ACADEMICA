@@ -12,15 +12,6 @@
                 <i class="bi bi-plus-circle me-1"></i>Nuevo Usuario
             </a>
         </div>
-        <div class="btn-group">
-            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                <i class="bi bi-download me-1"></i>Exportar
-            </button>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Excel</a></li>
-                <li><a class="dropdown-item" href="#">PDF</a></li>
-            </ul>
-        </div>
     </div>
 </div>
 

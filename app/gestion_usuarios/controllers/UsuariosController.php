@@ -101,6 +101,32 @@ class UsuariosController extends Controller
         try {
             $db = Database::getInstance();
             
+            $ci = trim($_POST['ci'] ?? '');
+            $email = trim($_POST['email'] ?? '');
+            
+            // Verificar si existe un usuario inactivo con el mismo CI o email
+            $existingUserSql = "SELECT id, activo, ci, email FROM usuarios WHERE (ci = :ci OR email = :email)";
+            $existingUsers = $db->query($existingUserSql, [':ci' => $ci, ':email' => $email]);
+            
+            if (!empty($existingUsers)) {
+                foreach ($existingUsers as $existingUser) {
+                    if ($existingUser['activo'] == false) {
+                        // Si hay un usuario inactivo con el mismo CI o email, reactivarlo y actualizarlo
+                        $this->reactivateUser($existingUser['id'], $_POST);
+                        echo json_encode(['success' => true, 'message' => 'Usuario reactivado y actualizado exitosamente', 'redirect' => '/usuarios']);
+                        return;
+                    } else {
+                        // Si hay un usuario activo con el mismo CI o email, mostrar error específico
+                        if ($existingUser['ci'] === $ci) {
+                            echo json_encode(['success' => false, 'message' => 'Ya existe un usuario activo con este CI']);
+                        } else {
+                            echo json_encode(['success' => false, 'message' => 'Ya existe un usuario activo con este email']);
+                        }
+                        return;
+                    }
+                }
+            }
+            
             // Obtener rol_id basado en el nombre del rol
             $rolName = $_POST['rol'] ?? 'docente';
             $rolResult = $db->query("SELECT id FROM roles WHERE nombre = :nombre", [':nombre' => $rolName]);
@@ -137,10 +163,10 @@ class UsuariosController extends Controller
                 $sql = "INSERT INTO usuarios (ci, nombre, apellido, email, password_hash, rol_id, activo, password_changed) 
                         VALUES (:ci, :nombre, :apellido, :email, :password, :rol_id, true, :password_changed)";
                 $params = [
-                    ':ci' => trim($_POST['ci'] ?? uniqid('CI')),
+                    ':ci' => $ci,
                     ':nombre' => trim($_POST['nombre'] ?? ''),
                     ':apellido' => trim($_POST['apellido'] ?? ''),
-                    ':email' => trim($_POST['email'] ?? ''),
+                    ':email' => $email,
                     ':password' => $hashedPassword,
                     ':rol_id' => (int)$rolId,
                     ':password_changed' => $passwordChangedValue // Boolean explícito: true o false
@@ -149,10 +175,10 @@ class UsuariosController extends Controller
                 $sql = "INSERT INTO usuarios (ci, nombre, apellido, email, password_hash, rol_id, activo) 
                         VALUES (:ci, :nombre, :apellido, :email, :password, :rol_id, true)";
                 $params = [
-                    ':ci' => $_POST['ci'] ?? uniqid('CI'),
-                    ':nombre' => $_POST['nombre'] ?? '',
-                    ':apellido' => $_POST['apellido'] ?? '',
-                    ':email' => $_POST['email'] ?? '',
+                    ':ci' => $ci,
+                    ':nombre' => trim($_POST['nombre'] ?? ''),
+                    ':apellido' => trim($_POST['apellido'] ?? ''),
+                    ':email' => $email,
                     ':password' => $hashedPassword,
                     ':rol_id' => $rolId
                 ];
@@ -161,7 +187,7 @@ class UsuariosController extends Controller
             
             // Obtener el ID del usuario creado
             $userIdSql = "SELECT id FROM usuarios WHERE email = :email ORDER BY created_at DESC LIMIT 1";
-            $userIdResult = $db->query($userIdSql, [':email' => $_POST['email']]);
+            $userIdResult = $db->query($userIdSql, [':email' => $email]);
             $userId = $userIdResult && count($userIdResult) > 0 ? $userIdResult[0]['id'] : null;
             
             // Registrar actividad
@@ -174,6 +200,92 @@ class UsuariosController extends Controller
             echo json_encode(['success' => true, 'message' => 'Usuario creado exitosamente', 'redirect' => '/usuarios']);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
+
+    private function reactivateUser($userId, $postData)
+    {
+        try {
+            $db = Database::getInstance();
+            
+            // Obtener rol_id basado en el nombre del rol
+            $rolName = $postData['rol'] ?? 'docente';
+            $rolResult = $db->query("SELECT id FROM roles WHERE nombre = :nombre", [':nombre' => $rolName]);
+            $rolId = $rolResult && count($rolResult) > 0 ? $rolResult[0]['id'] : 3;
+            
+            $hashedPassword = password_hash($postData['password'] ?? '', PASSWORD_BCRYPT);
+            
+            // Verificar si la columna password_changed existe
+            $checkColumnSql = "SELECT COUNT(*) as total 
+                              FROM information_schema.columns 
+                              WHERE table_name = 'usuarios' 
+                              AND column_name = 'password_changed'";
+            $columnResult = $db->query($checkColumnSql);
+            $hasPasswordChangedColumn = (($columnResult[0]['total'] ?? 0) > 0);
+            
+            // Obtener datos anteriores
+            $oldUserSql = "SELECT * FROM usuarios WHERE id = :id";
+            $oldUser = $db->query($oldUserSql, [':id' => $userId]);
+            
+            if ($hasPasswordChangedColumn) {
+                $isDocente = ($rolName === 'docente');
+                $passwordChangedValue = $isDocente ? false : true;
+                
+                $sql = "UPDATE usuarios SET 
+                        ci = :ci, 
+                        nombre = :nombre, 
+                        apellido = :apellido, 
+                        email = :email, 
+                        password_hash = :password, 
+                        rol_id = :rol_id, 
+                        activo = true,
+                        password_changed = :password_changed,
+                        updated_at = CURRENT_TIMESTAMP
+                        WHERE id = :id";
+                $params = [
+                    ':ci' => trim($postData['ci'] ?? ''),
+                    ':nombre' => trim($postData['nombre'] ?? ''),
+                    ':apellido' => trim($postData['apellido'] ?? ''),
+                    ':email' => trim($postData['email'] ?? ''),
+                    ':password' => $hashedPassword,
+                    ':rol_id' => (int)$rolId,
+                    ':password_changed' => $passwordChangedValue,
+                    ':id' => $userId
+                ];
+            } else {
+                $sql = "UPDATE usuarios SET 
+                        ci = :ci, 
+                        nombre = :nombre, 
+                        apellido = :apellido, 
+                        email = :email, 
+                        password_hash = :password, 
+                        rol_id = :rol_id, 
+                        activo = true,
+                        updated_at = CURRENT_TIMESTAMP
+                        WHERE id = :id";
+                $params = [
+                    ':ci' => trim($postData['ci'] ?? ''),
+                    ':nombre' => trim($postData['nombre'] ?? ''),
+                    ':apellido' => trim($postData['apellido'] ?? ''),
+                    ':email' => trim($postData['email'] ?? ''),
+                    ':password' => $hashedPassword,
+                    ':rol_id' => (int)$rolId,
+                    ':id' => $userId
+                ];
+            }
+            
+            $db->query($sql, $params);
+            
+            // Registrar actividad como reactivación/actualización
+            ActivityLogger::logUpdate('usuarios', $userId, $oldUser, [
+                'action' => 'reactivated',
+                'nombre' => $postData['nombre'] ?? '',
+                'apellido' => $postData['apellido'] ?? '',
+                'email' => $postData['email'] ?? ''
+            ]);
+            
+        } catch (Exception $e) {
+            throw $e;
         }
     }
     

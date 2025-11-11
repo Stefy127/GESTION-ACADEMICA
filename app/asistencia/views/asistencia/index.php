@@ -7,11 +7,13 @@
         <p class="text-muted mb-0">Registra y consulta la asistencia docente</p>
     </div>
     <div class="btn-toolbar mb-2 mb-md-0">
+        <?php if ($user['rol'] === 'docente'): ?>
         <div class="btn-group me-2">
             <a href="/asistencia/registrar" class="btn btn-primary">
                 <i class="bi bi-plus-circle me-1"></i>Registrar Asistencia
             </a>
         </div>
+        <?php endif; ?>
         <?php if (in_array($user['rol'], ['administrador', 'coordinador', 'autoridad'])): ?>
         <div class="btn-group">
             <a href="/asistencia/reportes" class="btn btn-outline-secondary">
@@ -57,7 +59,7 @@ $ausencias = $ausencias ?? [];
                 <small class="text-muted">Gestiona las ausencias reportadas y sus soportes</small>
             </div>
             <div class="d-flex gap-2">
-                <?php if (($esDocente && $tieneIncumplimientos) || (!$esDocente)): ?>
+                <?php if ($user['rol'] === 'docente' && (($esDocente && $tieneIncumplimientos) || (!$esDocente))): ?>
                 <button type="button" class="btn btn-primary" id="btnNuevaAusencia"
                         data-mode="create">
                     <i class="bi bi-plus-circle me-1"></i>Registrar Justificación
@@ -153,7 +155,7 @@ $ausencias = $ausencias ?? [];
 
     <!-- Modal Crear/Editar Ausencia -->
     <div class="modal fade" id="ausenciaModal" tabindex="-1" aria-labelledby="ausenciaModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-fullscreen-sm-down">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="ausenciaModalLabel"><i class="bi bi-plus-circle me-2"></i>Registrar justificación</h5>
@@ -233,7 +235,7 @@ $ausencias = $ausencias ?? [];
 
     <!-- Modal eliminar ausencia -->
     <div class="modal fade" id="deleteAusenciaModal" tabindex="-1" aria-labelledby="deleteAusenciaModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="deleteAusenciaModalLabel"><i class="bi bi-trash me-2"></i>Eliminar ausencia</h5>

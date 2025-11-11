@@ -145,9 +145,9 @@
                                 <a href="/docentes/edit/<?php echo $docente['id']; ?>" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <button class="btn btn-outline-info" data-bs-toggle="tooltip" title="Ver Horarios">
+                                <a href="/horarios?docente_id=<?php echo $docente['id']; ?>" class="btn btn-outline-info" data-bs-toggle="tooltip" title="Ver Horarios">
                                     <i class="bi bi-calendar-week"></i>
-                                </button>
+                                </a>
                             </div>
                         </td>
                     </tr>

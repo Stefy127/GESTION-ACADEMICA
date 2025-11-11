@@ -2,25 +2,20 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-4 pb-3 mb-4">
     <div>
         <h1 class="h2 mb-1 fw-bold text-gray-800">
-            <i class="bi bi-calendar-week me-3 text-primary"></i>Gestión de Horarios
+            <i class="bi bi-calendar-week me-3 text-primary"></i>
+            <?php if (!empty($filter_docente_id) && !empty($docente)): ?>
+                Horarios de <?php echo htmlspecialchars($docente['nombre'] . ' ' . $docente['apellido']); ?>
+            <?php else: ?>
+                Gestión de Horarios
+            <?php endif; ?>
         </h1>
-        <p class="text-muted mb-0">Administra los horarios académicos</p>
+        <p class="text-muted mb-0"><?php echo !empty($filter_docente_id) ? 'Horarios asociados al docente seleccionado' : 'Administra los horarios académicos'; ?></p>
     </div>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
             <a href="/horarios/create" class="btn btn-primary">
                 <i class="bi bi-plus-circle me-1"></i>Nuevo Horario
             </a>
-        </div>
-        <div class="btn-group">
-            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                <i class="bi bi-calendar3 me-1"></i>Vista
-            </button>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Tabla</a></li>
-                <li><a class="dropdown-item" href="#">Calendario</a></li>
-                <li><a class="dropdown-item" href="#">Por Docente</a></li>
-            </ul>
         </div>
     </div>
 </div>
