@@ -515,6 +515,53 @@ main.container-fluid .col-md-10 {
     }
 }
 
+/* Mobile-specific tweaks */
+@media (max-width: 576px) {
+    /* Make primary action buttons full width for easier tapping */
+    .btn, .btn-group .btn {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Ensure modal footers buttons are easy to tap */
+    .modal-footer .btn {
+        flex: 1 1 100%;
+    }
+
+    /* Reduce card hover effects on touch devices to avoid layout shifts */
+    .card:hover {
+        transform: none;
+        box-shadow: var(--shadow-md);
+    }
+
+    /* Make table cells wrap and allow horizontal scroll */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Make sidebar occupy top area and be collapsible visually */
+    .sidebar {
+        position: relative;
+        width: 100%;
+        top: 56px;
+        left: 0;
+        border-right: none;
+        box-shadow: none;
+    }
+
+    /* Reduce paddings for small screens */
+    .card-body {
+        padding: 0.75rem;
+    }
+
+    /* Make stat values smaller to fit on small screens */
+    .stat-card .stat-value {
+        font-size: 1.6rem;
+    }
+}
+
 /* Avatar y elementos adicionales */
 .avatar-sm {
     width: 40px;
@@ -680,3 +727,43 @@ main.container-fluid .col-md-10 {
         border: 1px solid #ddd !important;
     }
 }
+
+/* Collapsed / compressed sidebar styles */
+body.sidebar-collapsed .sidebar {
+    width: 80px !important;
+}
+
+body.sidebar-collapsed main.container-fluid .col-md-10 {
+    margin-left: 80px !important;
+}
+
+/* Hide text labels in collapsed state */
+body.sidebar-collapsed .sidebar .nav-link span,
+body.sidebar-collapsed .offcanvas .nav-link span {
+    display: none !important;
+}
+
+body.sidebar-collapsed .sidebar .nav-link i,
+body.sidebar-collapsed .offcanvas .nav-link i {
+    margin-right: 0 !important;
+    font-size: 1.25rem;
+}
+
+/* Smaller padding for collapsed */
+body.sidebar-collapsed .sidebar .nav-link {
+    padding: 0.75rem 0.75rem !important;
+    justify-content: center;
+}
+
+/* Change collapse button icon direction when collapsed */
+.sidebar-collapse-btn i {
+    transition: transform 0.2s ease;
+}
+
+body.sidebar-collapsed .sidebar-collapse-btn i,
+body.sidebar-collapsed .offcanvas .sidebar-collapse-btn i {
+    transform: rotate(180deg);
+}
+
+/* Ensure offcanvas body respects collapsed look when applied */
+/* (no extra rules required for offcanvas body) */

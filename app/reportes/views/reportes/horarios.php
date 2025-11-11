@@ -64,30 +64,6 @@
     </div>
 </div>
 
-<!-- Gráficos de Análisis -->
-<div class="row g-4 mb-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Ocupación por Día</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="ocupacionDiaChart" height="100"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Distribución de Aulas</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="distribucionAulasChart" height="100"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Tabla de Ocupación por Día -->
 <div class="card">
     <div class="card-header">
