@@ -438,6 +438,61 @@ class Auth
     }
     
     /**
+     * Obtener usuario por ID
+     */
+    public function getUserById($userId)
+    {
+        // Verificar si la columna password_changed existe
+        $hasPasswordChangedColumn = $this->checkColumnExists('usuarios', 'password_changed');
+        $passwordChangedField = $hasPasswordChangedColumn ? 'COALESCE(u.password_changed, true) as password_changed' : 'true as password_changed';
+        
+        $sql = "SELECT u.*, r.nombre as rol_nombre, r.permisos,
+                       $passwordChangedField
+                FROM usuarios u 
+                LEFT JOIN roles r ON u.rol_id = r.id 
+                WHERE u.id = :id AND u.activo = true";
+        
+        $result = $this->db->query($sql, ['id' => $userId]);
+        
+        if (empty($result)) {
+            return null;
+        }
+        
+        $user = $result[0];
+        
+        return [
+            'id' => $user['id'],
+            'nombre' => $user['nombre'],
+            'apellido' => $user['apellido'],
+            'email' => $user['email'],
+            'telefono' => $user['telefono'],
+            'ci' => $user['ci'],
+            'rol' => $user['rol_nombre'] ?? 'sin_rol',
+            'rol_id' => $user['rol_id'],
+            'permisos' => $user['permisos'] ? json_decode($user['permisos'], true) : [],
+            'created_at' => $user['created_at'],
+            'updated_at' => $user['updated_at'],
+            'ultimo_acceso' => $user['ultimo_acceso'],
+            'password_changed' => $user['password_changed'] ?? true
+        ];
+    }
+    
+    /**
+     * Verificar contraseña de un usuario
+     */
+    public function verifyPassword($userId, $password)
+    {
+        $sql = "SELECT password_hash FROM usuarios WHERE id = :id AND activo = true";
+        $result = $this->db->query($sql, ['id' => $userId]);
+        
+        if (empty($result)) {
+            return false;
+        }
+        
+        return password_verify($password, $result[0]['password_hash']);
+    }
+    
+    /**
      * Limpiar sesiones expiradas
      */
     public function cleanExpiredSessions()

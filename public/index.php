@@ -66,6 +66,9 @@ $router->get('/usuarios/edit/{id}', 'Usuarios@edit');
 $router->post('/usuarios/update/{id}', 'Usuarios@update');
 $router->post('/usuarios/delete/{id}', 'Usuarios@delete');
 
+// Rutas de perfil de usuario
+$router->get('/profile', 'Profile@index');
+
 // Rutas de gestión de docentes
 $router->get('/docentes', 'Docentes@index');
 $router->get('/docentes/edit/{id}', 'Docentes@edit');
