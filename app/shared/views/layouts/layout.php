@@ -44,9 +44,6 @@
                                 <li><a class="dropdown-item" href="/profile">
                                     <i class="bi bi-person me-2"></i>Mi Perfil
                                 </a></li>
-                                <li><a class="dropdown-item" href="/settings">
-                                    <i class="bi bi-gear me-2"></i>Configuración
-                                </a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="/logout">
                                     <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
@@ -221,7 +218,10 @@
                                 <div class="fw-semibold"><?php echo htmlspecialchars($user['nombre'] . ' ' . $user['apellido']); ?></div>
                                 <small class="text-muted"><?php echo ucfirst($user['rol']); ?></small>
                             </div>
-                            <a class="btn btn-sm btn-outline-secondary ms-2" href="/profile"><i class="bi bi-person"></i></a>
+                            <div class="d-flex gap-1">
+                                <a class="btn btn-sm btn-outline-secondary" href="/profile" title="Mi Perfil"><i class="bi bi-person"></i></a>
+                                <a class="btn btn-sm btn-outline-danger" href="/logout" title="Cerrar Sesión"><i class="bi bi-box-arrow-right"></i></a>
+                            </div>
                         </div>
 
                         <div class="px-3 mb-4">
@@ -345,10 +345,16 @@
                         <?php endif; ?>
                         <!-- Sidebar collapse button (mobile offcanvas) -->
                         <div class="px-3 py-3 mt-3 border-top">
-                            <button id="sidebarCollapseBtnMobile" class="btn btn-sm btn-outline-secondary w-100 sidebar-collapse-btn" type="button" title="Comprimir barra lateral">
+                            <button id="sidebarCollapseBtnMobile" class="btn btn-sm btn-outline-secondary w-100 sidebar-collapse-btn mb-2" type="button" title="Comprimir barra lateral">
                                 <i class="bi bi-chevron-left"></i>
                                 <span class="ms-2">Comprimir</span>
                             </button>
+                            
+                            <!-- Logout button for mobile -->
+                            <a href="/logout" class="btn btn-sm btn-danger w-100">
+                                <i class="bi bi-box-arrow-right me-1"></i>
+                                <span>Cerrar Sesión</span>
+                            </a>
                         </div>
                     </div>
                 </div>

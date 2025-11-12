@@ -49,12 +49,6 @@
                         </button>
                     </div>
                 </form>
-
-                <div class="text-center mt-4">
-                    <a href="/forgot-password" class="text-decoration-none">
-                        ¿Olvidaste tu contraseña?
-                    </a>
-                </div>
             </div>
         </div>
     </div>
